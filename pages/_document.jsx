@@ -13,7 +13,7 @@ export default function Document() {
 
         {/* <!-- Open Graph / Facebook --> */}
         <meta property="og:type" content="website" />
-        <meta property="og:url" content="https://https://techjourney.xyz//" />
+        <meta property="og:url" content="https://fuadhasanemon.vercel.app/" />
         <meta property="og:title" content="Fuad ✦ Developer, Designer" />
         <meta
           property="og:description"
@@ -21,7 +21,7 @@ export default function Document() {
         />
         <meta
           property="og:image"
-          content="https://res.cloudinary.com/dhtviyhse/image/upload/v1682600618/pranjalshikhar_i8znzx.jpg"
+          content="https://res.cloudinary.com/dfiyn4flk/image/upload/v1717730929/jyz2u89kjwk7aq5o41ig.jpg"
         />
 
         {/* <!-- Twitter --> */}
@@ -34,7 +34,7 @@ export default function Document() {
         />
         <meta
           property="twitter:image"
-          content="https://res.cloudinary.com/dhtviyhse/image/upload/v1682600618/pranjalshikhar_i8znzx.jpg"
+          content="https://res.cloudinary.com/dfiyn4flk/image/upload/v1717730929/jyz2u89kjwk7aq5o41ig.jpg"
         />
 
         {/* whatsapp */}
@@ -47,7 +47,7 @@ export default function Document() {
         <meta
           property="og:image"
           itemprop="image"
-          content="https://res.cloudinary.com/dhtviyhse/image/upload/v1682600618/pranjalshikhar_i8znzx.jpg"
+          content="https://res.cloudinary.com/dfiyn4flk/image/upload/v1717730929/jyz2u89kjwk7aq5o41ig.jpg"
         />
         <meta property="og:type" content="website" />
 

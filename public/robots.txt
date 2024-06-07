@@ -3,7 +3,7 @@ User-agent: *
 Allow: /
 
 # Host
-Host: https://pranjalshikhar.vercel.app/
+Host: https://fuadhasanemon.vercel.app/
 
 # Sitemaps
-Sitemap: https://pranjalshikhar.vercel.app/sitemap.xml
+Sitemap: https://fuadhasanemon.vercel.app/sitemap.xml
