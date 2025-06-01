@@ -58,7 +58,7 @@ const TimeLine = () => {
 				"Shadcn UI",
 			],
 			class:
-				"bg-violet-100 text-red-800 text-sm font-medium px-2.5 py-0.5 rounded dark:bg-red-900 dark:text-red-300",
+				"bg-violet-200 text-red-800 text-sm font-medium px-2.5 py-0.5 rounded dark:bg-violet-900 dark:text-red-300",
 		},
 		{
 			id: 2,
