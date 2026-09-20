@@ -1,9 +1,0 @@
-# *
-User-agent: *
-Allow: /
-
-# Host
-Host: https://fuadhasanemon.vercel.app/
-
-# Sitemaps
-Sitemap: https://fuadhasanemon.vercel.app/sitemap.xml

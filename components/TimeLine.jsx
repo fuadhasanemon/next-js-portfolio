@@ -1,4 +1,4 @@
-import React from "react";
+import Reveal from "@/components/Reveal";
 
 const TimeLine = () => {
 	const data = [
@@ -80,44 +80,64 @@ const TimeLine = () => {
 		},
 	];
 	return (
-		<div>
-			<ol className="relative border-s border-gray-200 dark:border-gray-700">
-				{data.map((item) => (
-					<li className="mb-10 ms-6" key={item.id}>
-						<span className="absolute flex items-center justify-center w-6 h-6 bg-blue-100 rounded-full -start-3 ring-8 ring-white dark:ring-gray-900 dark:bg-blue-900">
-							<svg
-								className="w-2.5 h-2.5 text-blue-800 dark:text-blue-300"
-								aria-hidden="true"
-								xmlns="http://www.w3.org/2000/svg"
-								fill="currentColor"
-								viewBox="0 0 20 20"
-							>
-								<path d="M20 4a2 2 0 0 0-2-2h-2V1a1 1 0 0 0-2 0v1h-3V1a1 1 0 0 0-2 0v1H6V1a1 1 0 0 0-2 0v1H2a2 2 0 0 0-2 2v2h20V4ZM0 18a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8H0v10Zm5-8h10a1 1 0 0 1 0 2H5a1 1 0 0 1 0-2Z" />
-							</svg>
-						</span>
-						<h3 className="flex items-center mb-1 text-lg font-semibold text-gray-900 dark:text-white">
-							{item.title}{" "}
-							{item.id === 0 && (
-								<span className="bg-red-500 text-[#fff] text-sm font-medium me-2 px-2.5 py-0.5 border-sky-100 rounded ms-3">
-									Latest
-								</span>
-							)}
+		<ol
+			className="relative ms-3 border-s"
+			style={{ borderColor: "rgb(var(--line) / 0.14)" }}
+		>
+			{data.map((item, i) => (
+				<Reveal
+					as="li"
+					key={item.id}
+					delay={i * 90}
+					y={24}
+					className="group relative ms-8 pb-14 last:pb-0"
+				>
+					{/* Node marker */}
+					<span
+						aria-hidden="true"
+						className="absolute -start-[2.5rem] top-1.5 grid h-4 w-4 place-items-center rounded-full ring-4 transition-transform duration-500 group-hover:scale-125"
+						style={{
+							background: item.id === 0 ? "rgb(var(--accent))" : "rgb(var(--faint))",
+							"--tw-ring-color": "rgb(var(--bg))",
+						}}
+					>
+						<span className="h-1.5 w-1.5 rounded-full bg-bg" />
+					</span>
+
+					<div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+						<h3 className="text-fluid-h3 font-semibold text-ink">
+							{item.title}
 						</h3>
-						<time className="block mb-2 text-sm font-normal leading-none text-gray-400 dark:text-gray-500">
-							{item.duration}
-						</time>
-						<p>{item.org}</p>
-						<div className="flex flex-wrap mt-8 gap-2">
-							{item.skills.map((i, idx) => (
-								<span key={idx} className={`${item.class}`}>
-									{i}
-								</span>
-							))}
-						</div>
-					</li>
-				))}
-			</ol>
-		</div>
+						{item.id === 0 && (
+							<span
+								className="rounded-full px-2.5 py-0.5 text-[0.7rem] font-medium text-white"
+								style={{ background: "rgb(var(--accent))" }}
+							>
+								Current
+							</span>
+						)}
+					</div>
+
+					<p className="mt-1.5 text-fluid-base text-ink/80">{item.org}</p>
+
+					<time className="mt-1 block font-space text-xs uppercase tracking-wider text-faint">
+						{item.duration}
+					</time>
+
+					<ul className="mt-5 flex flex-wrap gap-1.5">
+						{item.skills.map((skill) => (
+							<li
+								key={skill}
+								className="rounded-md border px-2 py-0.5 text-[0.72rem] text-muted transition-colors duration-300 hover:border-accent/50 hover:text-accent"
+								style={{ borderColor: "rgb(var(--line) / 0.13)" }}
+							>
+								{skill}
+							</li>
+						))}
+					</ul>
+				</Reveal>
+			))}
+		</ol>
 	);
 };
 

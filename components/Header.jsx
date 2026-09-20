@@ -1,164 +1,212 @@
-/* eslint-disable @next/next/no-img-element */
-import { useState, useEffect, useRef } from "react";
-
+import { useCallback, useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/router";
 import { useTheme } from "next-themes";
-import Image from "next/image";
-import Link from "next/link";
 
-import { MdOutlineLightMode, MdOutlineDarkMode } from "react-icons/md";
+import { MdOutlineDarkMode, MdOutlineLightMode } from "react-icons/md";
 
-import fuad_header_black from "@/public/fuad-black.svg";
-import fuad_header_white from "@/public/fuad-white.svg";
+const LINKS = [
+  { label: "Work", href: "/work" },
+  { label: "Blog", href: "/blog" },
+  { label: "About", href: "/about" },
+  { label: "Timeline", href: "/timeline" },
+  { label: "Tech", href: "/tech" },
+  { label: "Contact", href: "/#contact" },
+];
+
+/**
+ * The name is the mark. Weight and tracking carry it rather than an icon:
+ * the surname stays collapsed on a phone and reveals at sm+, so the bar keeps
+ * its proportions without falling back to initials.
+ */
+const Wordmark = () => (
+  <Link
+    href="/"
+    aria-label="Fuad Hasan Emon — home"
+    className="wordmark group inline-flex items-baseline text-ink"
+  >
+    <span className="wordmark-first">Fuad</span>
+    <span className="wordmark-rest">Hasan Emon</span>
+    <span aria-hidden="true" className="wordmark-dot" />
+  </Link>
+);
 
 const Header = () => {
-	const { systemTheme, theme, setTheme } = useTheme();
-	const router = useRouter().asPath;
-	const [mounted, setMounted] = useState(false);
-	let Links = [
-		{ name: "timeline", link: "/timeline" },
-		{ name: "work", link: "/work" },
-		{ name: "about", link: "/about" },
-		{ name: "tech", link: "/tech" },
-	];
-	const [isScrolled, setIsScrolled] = useState(false);
-	let [open, setOpen] = useState(false);
-	const touchRef = useRef();
-	const clickHandler = (link) => {
-		if (router != link) {
-			setTimeout(() => {
-				setOpen(false);
-			}, 700);
-		}
-	};
-	const useOutsideAlerter = (ref) => {
-		useEffect(() => {
-			/**
-			 * Alert if clicked on outside of element
-			 */
-			function handleClickOutside(event) {
-				if (ref.current && !ref.current.contains(event.target)) {
-					setOpen(false);
-				}
-			}
-			// Bind the event listener
-			document.addEventListener("mousedown", handleClickOutside);
-			return () => {
-				// Unbind the event listener on clean up
-				document.removeEventListener("mousedown", handleClickOutside);
-			};
-		}, [ref]);
-	};
-	useOutsideAlerter(touchRef);
+  const { resolvedTheme, setTheme } = useTheme();
+  const router = useRouter();
+  const path = router.asPath;
 
-	useEffect(() => {
-		const handleScroll = () => {
-			if (window.scrollY > 70) {
-				setIsScrolled(true);
-			} else {
-				setIsScrolled(false);
-			}
-		};
-		setMounted(true);
-		window.addEventListener("scroll", handleScroll);
-		return () => {
-			window.removeEventListener("scroll", handleScroll);
-		};
-	}, []);
-	if (!mounted) return null;
-	const currentTheme = theme === "system" ? systemTheme : theme;
-	return (
-		<nav
-			ref={touchRef}
-			className={`${
-				isScrolled && "bg-opacity-[0.5] shadow-md drop-shadow-lg "
-			} font-medium duration-500 bg-opacity-50 transition-all linear z-40 dark:text-white w-[75%] sm:w-[75%] md:w-[70%] lg:w-[55%] xl:w-[50%] max-w-6xl mx-auto  bg-white dark:bg-[#35353579] ${
-				open && "dark:bg-[#000] bg-opacity-100"
-			} drop-shadow-xs backdrop-blur-sm top-4 sticky rounded-lg`}
-		>
-			<div className="flex justify-between md:space-x-10 lg:space-x-12 xl:space-x-16 md:flex items-center place-items-center md:justify-center py-3 md:px-10 px-8">
-				<div className="select-none order-2 md:order-1 cursor-pointer flex items-center text-gray-800">
-					<Link href={"/"} className="">
-						{currentTheme === "dark" ? (
-							<Image src={fuad_header_white} alt="header" width="70" />
-						) : (
-							<Image src={fuad_header_black} alt="header" width="70" />
-						)}
-					</Link>
-				</div>
-				{currentTheme === "dark" ? (
-					<button
-						onClick={() => {
-							setTheme("light");
-						}}
-						className="w-max md:order-8 fill-purple-600 "
-					>
-						<MdOutlineLightMode className="w-4 h-4 " />{" "}
-					</button>
-				) : (
-					<button
-						onClick={() => {
-							setTheme("dark");
-						}}
-						className="w-max md:order-8 fill-purple-600 "
-					>
-						<MdOutlineDarkMode className="w-4 h-4" />{" "}
-					</button>
-				)}
+  const [mounted, setMounted] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const [open, setOpen] = useState(false);
+  const navRef = useRef(null);
 
-				<div
-					onClick={() => setOpen(!open)}
-					className="transition-all duration-500 ease-in order-3 text-lg flex flex-col space-y-[0.2rem]  cursor-pointer items-center font-semibold md:hidden"
-				>
-					<div
-						className={` ${
-							open && "rotate-45 translate-y-[5px] "
-						} relative rounded-xl origin-center transition-all duration-500 ease-in w-4 h-[0.1125rem] dark:bg-white/70 dark:text-white/70 fill-black text-black bg-black`}
-					></div>
-					<div
-						className={` ${
-							open && "opacity-0 translate-x-20"
-						} relative rounded-xl origin-center transition-all duration-1000 ease-in-out w-4 h-[0.1rem] dark:bg-white/70 dark:text-white/70 fill-black text-black bg-black `}
-					></div>
-					<div
-						className={` ${
-							open && "-rotate-45 -translate-y-[5px]"
-						} relative rounded-xl origin-center transition-all duration-500 ease-in w-4 h-[0.1125rem] dark:bg-white/70 dark:text-white/70 fill-black text-black bg-black`}
-					></div>
-				</div>
-				<ul
-					className={` rounded-3xl md:rounded-none  ${
-						open ? "dark:bg-[#000]" : "dark:bg-[#35353500]"
-					} bg-white  py-4 md:py-0 md:bg-inherit font-semibold order-4 md:flex md:items-center md:pb-0 pb-8 absolute md:static bg-light-blue md:bg-none md:z-auto z-[-1] left-0 w-full md:w-auto md:pl-0 pl-9 lg:transition-none transition-all duration-500 ease-in ${
-						open ? "top-[3.5rem]" : "top-[-490px]"
-					}`}
-				>
-					{Links.map((link) => (
-						<li key={link.name} className="md:ml-8 text-base md:my-0 my-7">
-							<Link
-								href={link.link}
-								onClick={() => clickHandler(`${link.name}`)}
-								className={`${
-									router === link.link
-										? " text-purple-400 font-out"
-										: " text-gray-700 dark:text-white font-out"
-								} hover:text-purple-500 dark:hover:text-purple-500 duration-500`}
-							>
-								<span>
-									{link.name}
-									{link.name === "timeline" && (
-										<sup className="font-semibold text-[8px] border-sky-100 rounded bg-red-600 px-1 text-white">
-											1
-										</sup>
-									)}
-								</span>
-							</Link>
-						</li>
-					))}
-				</ul>
-			</div>
-		</nav>
-	);
+  useEffect(() => setMounted(true), []);
+
+  // rAF-throttled: the listener only ever schedules one read per frame.
+  useEffect(() => {
+    let frame = 0;
+    const read = () => {
+      frame = 0;
+      setScrolled(window.scrollY > 24);
+    };
+    const onScroll = () => {
+      if (!frame) frame = requestAnimationFrame(read);
+    };
+    read();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      if (frame) cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", onScroll);
+    };
+  }, []);
+
+  useEffect(() => setOpen(false), [path]);
+
+  // Lock the page while the sheet is open, and close on Escape / outside click.
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e) => {
+      if (navRef.current && !navRef.current.contains(e.target)) setOpen(false);
+    };
+    const onKey = (e) => e.key === "Escape" && setOpen(false);
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prev;
+    };
+  }, [open]);
+
+  const toggleTheme = useCallback(
+    () => setTheme(resolvedTheme === "dark" ? "light" : "dark"),
+    [resolvedTheme, setTheme]
+  );
+
+  const isDark = mounted && resolvedTheme === "dark";
+  const isActive = (href) =>
+    href.startsWith("/#") ? false : path === href || path.startsWith(`${href}/`);
+
+  return (
+    <header
+      ref={navRef}
+      data-scrolled={scrolled || open ? "true" : "false"}
+      className="site-header fixed inset-x-0 top-0 z-50"
+    >
+      <div className="site-header__inner shell flex items-center justify-between gap-6">
+        <Wordmark />
+
+        <nav aria-label="Main" className="hidden md:block">
+          <ul className="flex items-center gap-7 lg:gap-9">
+            {LINKS.map((link) => {
+              const active = isActive(link.href);
+              return (
+                <li key={link.href}>
+                  <Link
+                    href={link.href}
+                    aria-current={active ? "page" : undefined}
+                    data-active={active ? "true" : undefined}
+                    className="nav-link text-sm"
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </nav>
+
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={toggleTheme}
+            aria-label={isDark ? "Switch to light theme" : "Switch to dark theme"}
+            className="grid h-9 w-9 place-items-center rounded-full text-muted transition-colors duration-300 hover:bg-ink/5 hover:text-ink"
+          >
+            {mounted &&
+              (isDark ? (
+                <MdOutlineLightMode className="h-4 w-4" />
+              ) : (
+                <MdOutlineDarkMode className="h-4 w-4" />
+              ))}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setOpen((v) => !v)}
+            aria-label={open ? "Close menu" : "Open menu"}
+            aria-expanded={open}
+            aria-controls="mobile-nav"
+            className="grid h-9 w-9 place-items-center rounded-full text-ink transition-colors duration-300 hover:bg-ink/5 md:hidden"
+          >
+            <span className="flex h-3 w-[18px] flex-col justify-between">
+              <span
+                className={`block h-[1.5px] w-full origin-center rounded bg-current transition-transform duration-300 ease-out ${
+                  open ? "translate-y-[5.25px] rotate-45" : ""
+                }`}
+              />
+              <span
+                className={`block h-[1.5px] w-full rounded bg-current transition-all duration-200 ${
+                  open ? "scale-x-0 opacity-0" : ""
+                }`}
+              />
+              <span
+                className={`block h-[1.5px] w-full origin-center rounded bg-current transition-transform duration-300 ease-out ${
+                  open ? "-translate-y-[5.25px] -rotate-45" : ""
+                }`}
+              />
+            </span>
+          </button>
+        </div>
+      </div>
+
+      {/* Hairline that draws itself in as the page leaves the top. */}
+      <span aria-hidden="true" className="site-header__rule" />
+
+      {/* Mobile sheet — grid-rows animates height without a magic number. */}
+      <div
+        id="mobile-nav"
+        className="mobile-nav md:hidden"
+        data-open={open ? "true" : "false"}
+      >
+        <div className="min-h-0 overflow-hidden">
+          <ul className="shell flex flex-col pb-8 pt-2">
+            {LINKS.map((link, i) => {
+              const active = isActive(link.href);
+              return (
+                <li key={link.href} className="mobile-nav__item" style={{ "--i": i }}>
+                  <Link
+                    href={link.href}
+                    aria-current={active ? "page" : undefined}
+                    tabIndex={open ? 0 : -1}
+                    className={`flex items-baseline gap-4 border-b py-4 text-2xl transition-colors duration-300 ${
+                      active ? "text-ink" : "text-muted"
+                    }`}
+                    style={{ borderColor: "rgb(var(--line) / 0.08)" }}
+                  >
+                    <span className="font-space text-[0.65rem] text-faint">
+                      {String(i + 1).padStart(2, "0")}
+                    </span>
+                    {link.label}
+                    {active && (
+                      <span
+                        aria-hidden="true"
+                        className="ml-auto h-1.5 w-1.5 self-center rounded-full"
+                        style={{ background: "rgb(var(--accent))" }}
+                      />
+                    )}
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      </div>
+    </header>
+  );
 };
 
 export default Header;

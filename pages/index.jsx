@@ -1,94 +1,156 @@
-import { useEffect } from "react";
-import { useTheme } from "next-themes";
-import Head from "next/head";
-import Image from "next/image";
+import Link from "next/link";
 
 import Contact from "@/components/Contact";
 import Experience from "@/components/Experience";
+import Hero from "@/components/Hero";
+import PostCard from "@/components/PostCard";
+import ProjectCard from "@/components/ProjectCard";
+import Reveal from "@/components/Reveal";
+import SectionHeading from "@/components/SectionHeading";
+import Seo from "@/components/Seo";
+import { useRevealGroup } from "@/hooks/useReveal";
+import { personSchema, websiteSchema } from "@/lib/jsonld";
+import { deriveExcerpt } from "@/lib/markdown";
+import { prisma, revalidateFor, safeQuery, serialize } from "@/lib/prisma";
+import { SITE, readingTime } from "@/lib/site";
 
-import { BsArrowUpRight } from "react-icons/bs";
+const PROJECT_FIELDS = {
+  id: true,
+  title: true,
+  slug: true,
+  shortDescription: true,
+  coverImage: true,
+  coverAlt: true,
+  technologies: true,
+};
 
-import Avatar_Black from "@/public/Avatar-black.svg";
-import Avatar_White from "@/public/Avatar-white.svg";
-import BooBlack from "@/public/boo-black.svg";
-import BooWhite from "@/public/boo-white.svg";
-import Link from "next/link";
+/** Tenure since July 2020, computed at render so it never goes stale. */
+function tenure() {
+  const today = new Date();
+  const start = new Date(2020, 6);
+  let years = today.getFullYear() - start.getFullYear();
+  let months = today.getMonth() - start.getMonth();
+  if (months < 0) {
+    years -= 1;
+    months += 12;
+  }
+  return { years, months: months + 1 };
+}
 
-export default function Home() {
-  const { systemTheme, theme, setTheme } = useTheme();
-  const currentTheme = theme === "system" ? systemTheme : theme;
-
-  useEffect(() => {
-    console.clear();
-    console.log.apply(console, [
-      "%c Designed and Developed by Pranjal Shikhar %c %c🚀 %c\n",
-      "color: #fff; background: #8000ff; padding:5px 0;",
-      "color: #fff; background: #242424; padding:5px 0 5px 5px;",
-      "background: #242424; padding:5px 0",
-      "background: #242424; padding:5px 5px 5px 0"
-    ]);
-    console.log.apply(console, [
-      "%c Thanks for stopping by, I’m currently looking to a new team of creative designers and developers.\n",
-      "color: #fff; background: #8000ff; padding:5px 0;"
-    ]);
-  }, []);
+export default function Home({ featuredProjects, latestPosts }) {
+  const { years, months } = tenure();
+  const revealRef = useRevealGroup();
 
   return (
     <>
-      <Head>
-        <title>Fuad ✦ Developer</title>
-        <link rel="icon" href="/Avatar-white.svg" />
-      </Head>
-      <div className="lg:min-h-screen px-10 sm:px-20 md:px-32 lg:mb-12 lg:px-60 mx-auto max-w-[75rem]">
-        <div className="lg:h-screen 2xl:h-max max-w-[90rem] mx-auto">
-          <div className="flex flex-row justify-start items-center mt-20">
-            <Image
-              src={currentTheme === "dark" ? Avatar_White : Avatar_Black}
-              alt="pranjal"
-              width="80"
-              height="80"
+      <Seo
+        description={SITE.description}
+        path="/"
+        jsonLd={[personSchema(), websiteSchema()]}
+      />
+
+      <div ref={revealRef}>
+        <Hero years={years} months={months} />
+
+        <Experience years={years} months={months} />
+
+        {featuredProjects.length > 0 && (
+          <section className="shell py-24 sm:py-28">
+            <SectionHeading
+              eyebrow="Featured work"
+              title="Recent projects"
+              lead="A few builds worth a closer look."
             />
-            <div className="flex flex-col ml-4">
-              <h2 className="flex sm:text-2xl md:text-2xl lg:text-2xl">
-                <span className="font-semibold">Fuad Hasan Emon</span>
-                <span>
-                  <Image
-                    src={currentTheme === "dark" ? BooWhite : BooBlack}
-                    alt="boo"
-                    width="25"
-                    height="25"
-                  />
-                </span>
-              </h2>
-              <h3>
-                <Link
-                  href={"https://www.linkedin.com/in/fuadhasanemon/"}
-                  target="_blank"
-                  className="text-[#717171bb] flex items-center"
-                >
-                  <p>@fuadhasanemon</p>
-                  <BsArrowUpRight className="stroke-1 h-3" />
-                </Link>
-              </h3>
+            <div className="mt-16">
+              <ProjectCard projects={featuredProjects} />
             </div>
-          </div>
-          <div className="mt-12 text-base md:text-xl lg:text-xl xl:text-xl 2xl:text-xl">
-            <p className="sm:leading-6 md:leading-6 lg:leading-8">
-              A wizard who loves design and code. I develop modern, reactive,
-              and user-friendly web applications using the latest technologies
-              currently. Believe a perfect blend of user inteface architecture
-              is one, where the goals and needs are accounted for in an elegant,
-              efficient, and robust design of the user interface.
-            </p>
-          </div>
-        </div>
-        <div className="mt-28 mx-auto">
-          <Experience />
-        </div>
-        <div className="mt-28 mx-auto ">
+            <Reveal className="mt-14 text-center">
+              <Link href="/work" className="btn-ghost">
+                All projects
+              </Link>
+            </Reveal>
+          </section>
+        )}
+
+        {latestPosts.length > 0 && (
+          <section className="shell py-24 sm:py-28">
+            <SectionHeading
+              eyebrow="Writing"
+              title="Things I'm building and learning"
+              lead="Notes on AI agents, automation and modern web engineering."
+            />
+            <div className="mt-16 grid gap-x-8 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
+              {latestPosts.map((post, i) => (
+                <PostCard key={post.slug} post={post} delay={(i % 3) * 110} />
+              ))}
+            </div>
+            <Reveal className="mt-14 text-center">
+              <Link href="/blog" className="btn-ghost">
+                Read the blog
+              </Link>
+            </Reveal>
+          </section>
+        )}
+
+        <section id="contact" className="shell pb-28 pt-8 sm:pb-36">
           <Contact />
-        </div>
+        </section>
       </div>
     </>
   );
+}
+
+export async function getStaticProps() {
+  const { data, ok } = await safeQuery(
+    () =>
+      Promise.all([
+    prisma.project.findMany({
+      where: { published: true, featured: true },
+      orderBy: [{ order: "asc" }, { createdAt: "desc" }],
+      take: 3,
+      select: PROJECT_FIELDS,
+    }),
+    prisma.project.findMany({
+      where: { published: true },
+      orderBy: [{ order: "asc" }, { createdAt: "desc" }],
+      take: 3,
+      select: PROJECT_FIELDS,
+    }),
+    prisma.post.findMany({
+      where: { published: true },
+      orderBy: { publishedAt: "desc" },
+      take: 3,
+      select: {
+        slug: true,
+        title: true,
+        excerpt: true,
+        content: true,
+        coverImage: true,
+        coverAlt: true,
+        category: true,
+        publishedAt: true,
+      },
+    }),
+      ]),
+    [[], [], []]
+  );
+
+  const [featured, fallback, postRows] = data;
+
+  // Nothing flagged as featured yet? Show the top of the manual ordering.
+  const featuredProjects = featured.length > 0 ? featured : fallback;
+
+  const latestPosts = postRows.map(({ content, ...post }) => ({
+    ...post,
+    excerpt: post.excerpt || deriveExcerpt(content),
+    readingTime: readingTime(content),
+  }));
+
+  return {
+    props: {
+      featuredProjects: serialize(featuredProjects),
+      latestPosts: serialize(latestPosts),
+    },
+    revalidate: revalidateFor(ok),
+  };
 }
