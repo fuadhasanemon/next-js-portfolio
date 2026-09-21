@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 
 import AdminShell from "@/components/admin/AdminShell";
 import { Button, Field, Input, Panel, Textarea, Toggle } from "@/components/admin/Fields";
 import ImageInput from "@/components/admin/ImageInput";
+import useUnsavedChanges from "@/hooks/useUnsavedChanges";
 import { prisma, serialize } from "@/lib/prisma";
 import { slugify } from "@/lib/site";
 
@@ -28,11 +29,33 @@ const EMPTY = {
   noIndex: false,
 };
 
+/** The live form and the saved baseline must share a shape to be comparable. */
+const fromProject = (project) => ({ ...EMPTY, ...(project || {}) });
+
 export default function ProjectEditor({ project, isNew }) {
   const router = useRouter();
-  const [form, setForm] = useState({ ...EMPTY, ...(project || {}) });
+  const [form, setForm] = useState(() => fromProject(project));
+  // Snapshot of what is on the server; anything else means unsaved edits.
+  const [saved, setSaved] = useState(() => JSON.stringify(fromProject(project)));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+
+  const dirty = JSON.stringify(form) !== saved;
+  const release = useUnsavedChanges(dirty);
+
+  /** Adopt server data as both the form contents and the clean baseline. */
+  const adopt = (project) => {
+    const next = fromProject(project);
+    setForm(next);
+    setSaved(JSON.stringify(next));
+  };
+
+  // `/admin/projects/new` and `/admin/projects/[id]` are the same route, so a
+  // create swaps the props on the mounted component instead of remounting it.
+  useEffect(() => {
+    adopt(project);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [project?.id]);
 
   const set = (key) => (value) => setForm((f) => ({ ...f, [key]: value }));
   const onField = (key) => (e) => set(key)(e.target.value);
@@ -43,25 +66,35 @@ export default function ProjectEditor({ project, isNew }) {
     setBusy(true);
     setError("");
 
-    const res = await fetch(
-      isNew ? "/api/admin/projects" : `/api/admin/projects/${project.id}`,
-      {
-        method: isNew ? "POST" : "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+    try {
+      const res = await fetch(
+        isNew ? "/api/admin/projects" : `/api/admin/projects/${project.id}`,
+        {
+          method: isNew ? "POST" : "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(form),
+        }
+      );
+
+      if (!res.ok) {
+        setError((await res.json().catch(() => ({}))).error || "Save failed");
+        return;
       }
-    );
 
-    if (!res.ok) {
-      setError((await res.json()).error || "Save failed");
-      setBusy(false);
-      return;
-    }
+      const result = await res.json();
 
-    const saved = await res.json();
-    if (isNew) router.replace(`/admin/projects/${saved.id}`);
-    else {
-      setForm({ ...EMPTY, ...saved });
+      if (isNew) {
+        // The redirect is ours, and the project is already stored — the guard
+        // must not question it. Awaiting the navigation is also what lets the
+        // button stop spinning once the saved project is on screen.
+        release();
+        await router.replace(`/admin/projects/${result.id}`);
+      } else {
+        adopt(result);
+      }
+    } catch {
+      setError("Save failed — check your connection and try again.");
+    } finally {
       setBusy(false);
     }
   };
@@ -166,6 +199,9 @@ export default function ProjectEditor({ project, isNew }) {
             <Toggle label="Featured" checked={form.featured} onChange={set("featured")} />
 
             {error && <p className="text-sm text-red-500">{error}</p>}
+            {dirty && !error && (
+              <p className="text-xs text-faint">Unsaved changes</p>
+            )}
 
             <Button type="submit" loading={busy} className="w-full justify-center">
               {busy ? "Saving…" : isNew ? "Create project" : "Save changes"}

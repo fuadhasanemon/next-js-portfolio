@@ -15,6 +15,8 @@ module.exports = {
         faint: "rgb(var(--faint) / <alpha-value>)",
         accent: "rgb(var(--accent) / <alpha-value>)",
         accent2: "rgb(var(--accent-2) / <alpha-value>)",
+        // Text/icons placed on an --accent fill; flips per theme.
+        onAccent: "rgb(var(--on-accent) / <alpha-value>)",
       },
       fontSize: {
         // fluid type scale — min/max clamped, tuned for 360px → 1440px
@@ -70,11 +72,11 @@ module.exports = {
         wave: "wave 2.5s ease-in-out infinite",
       },
       fontFamily: {
-        out: ["Outfit", "Inter", "system-ui", "sans-serif"],
-        space: ["Space Mono", "ui-monospace", "monospace"],
+        out: ["var(--font-outfit)", "Inter", "system-ui", "sans-serif"],
+        space: ["var(--font-space-mono)", "ui-monospace", "monospace"],
         deca: ["Lexend Deca", "Inter", "sans-serif"],
         syne: ["Syne", "sans-serif"],
-        app: ["Homemade Apple", "cursive"],
+        app: ["var(--font-homemade-apple)", "cursive"],
         gloria: ["Gloria Hallelujah", "cursive"],
       },
     },

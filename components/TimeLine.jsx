@@ -110,7 +110,7 @@ const TimeLine = () => {
 						</h3>
 						{item.id === 0 && (
 							<span
-								className="rounded-full px-2.5 py-0.5 text-[0.7rem] font-medium text-white"
+								className="rounded-full px-2.5 py-0.5 text-[0.7rem] font-medium text-onAccent"
 								style={{ background: "rgb(var(--accent))" }}
 							>
 								Current

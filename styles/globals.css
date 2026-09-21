@@ -7,13 +7,18 @@
    --------------------------------------------------------------- */
 @layer base {
   :root {
+    color-scheme: light;
     --bg: 251 251 253;
     --surface: 255 255 255;
     --line: 17 17 24;
     --ink: 11 11 16;
     --muted: 92 92 104;
-    --faint: 140 140 152;
+    /* 4.53:1 on --bg. Lighter than this fails AA for body text. */
+    --faint: 115 115 127;
     --accent: 109 40 217;
+    /* Text that sits on an --accent fill. White only works where the accent
+       is dark enough to carry it, which is light mode only. */
+    --on-accent: 255 255 255;
     --accent-2: 13 148 136;
     --glow-a: 168 85 247;
     --glow-b: 45 212 191;
@@ -22,13 +27,18 @@
   }
 
   .dark {
+    color-scheme: dark;
     --bg: 8 8 11;
     --surface: 18 18 23;
     --line: 255 255 255;
     --ink: 244 244 247;
     --muted: 154 154 166;
-    --faint: 110 110 122;
+    /* 4.53:1 on the .card surface, the worst case in this theme. */
+    --faint: 124 124 136;
     --accent: 167 139 250;
+    /* The dark accent is a light lavender; white on it is 2.72:1. Near-black
+       reads at 7.21:1 and keeps the accent colour itself unchanged. */
+    --on-accent: 11 11 16;
     --accent-2: 45 212 191;
     --glow-a: 147 51 234;
     --glow-b: 20 184 166;
@@ -56,6 +66,14 @@
 
   a {
     text-decoration: none;
+  }
+
+  /* Native dropdown rows: paint them explicitly so they stay legible in dark
+     mode, where the option text inherits --ink (near white). */
+  select option,
+  select optgroup {
+    background-color: rgb(var(--surface));
+    color: rgb(var(--ink));
   }
 
   h1, h2, h3, h4 {
@@ -141,7 +159,8 @@
   }
 
   .btn-primary {
-    @apply btn text-white;
+    @apply btn;
+    color: rgb(var(--on-accent));
     background: rgb(var(--accent));
   }
   .btn-primary:hover {
