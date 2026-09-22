@@ -40,6 +40,7 @@ export default function Blog({ featured, posts, categories }) {
       <div ref={revealRef} className="shell pb-28 pt-36 sm:pt-40">
         <SectionHeading
           as="h1"
+          align="left"
           eyebrow="Blog"
           title="Things I'm building, learning and exploring"
           lead="Practical notes from real projects — AI agents, automation, and the engineering behind modern web products."
@@ -67,12 +68,11 @@ export default function Blog({ featured, posts, categories }) {
             {categories.length > 0 && (
               <Reveal className="mt-20">
                 <h2 className="eyebrow">Topics</h2>
-                <ul className="mt-4 flex flex-wrap gap-2">
+                <ul className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2">
                   {categories.map((category) => (
                     <li
                       key={category}
-                      className="rounded-full border px-3 py-1 text-sm text-muted"
-                      style={{ borderColor: "rgb(var(--line) / 0.14)" }}
+                      className="font-space text-xs uppercase tracking-[0.12em] text-faint"
                     >
                       {category}
                     </li>

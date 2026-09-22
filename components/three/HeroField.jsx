@@ -243,9 +243,20 @@ const HeroField = ({ className = "" }) => {
         renderer.setSize(width(), height(), false);
         camera.aspect = width() / height();
         // Pull the camera back on narrow viewports so the shell stays whole.
-        camera.position.z = width() < 640 ? 8.6 : width() < 1024 ? 7.8 : 7.2;
+        restZ = width() < 640 ? 8.6 : width() < 1024 ? 7.8 : 7.2;
+        camera.position.z = restZ + INTRO_DOLLY * (1 - intro);
         camera.updateProjectionMatrix();
       };
+
+      /* Entrance. The field answers the headline rather than arriving with it:
+         it holds for the length of the first word's delay, then resolves over
+         the same span the word cascade takes. Smoothstep, so it eases in and
+         out of the move with no overshoot and nothing to notice. */
+      const INTRO_HOLD = reduced ? 0 : 0.1; // s
+      const INTRO_DUR = reduced ? 0.3 : 1.6; // s
+      const INTRO_DOLLY = reduced ? 0 : 0.6; // world units pulled back at t=0
+      let intro = 0;
+      let restZ = 7.2;
 
       let visible = true;
       const io =
@@ -268,6 +279,7 @@ const HeroField = ({ className = "" }) => {
       const clock = new THREE.Clock();
       let raf = 0;
       let fade = 0;
+      let elapsed = 0;
 
       const render = () => {
         raf = requestAnimationFrame(render);
@@ -283,8 +295,16 @@ const HeroField = ({ className = "" }) => {
 
         uniforms.uScroll.value += (scroll - uniforms.uScroll.value) * Math.min(1, dt * 4);
 
-        fade += (targetOpacity - fade) * Math.min(1, dt * 1.4);
-        uniforms.uOpacity.value = fade;
+        // `fade` only tracks the palette (it re-runs on theme change);
+        // `intro` owns the entrance curve, so the two never fight.
+        elapsed += dt;
+        const t = Math.min(1, Math.max(0, (elapsed - INTRO_HOLD) / INTRO_DUR));
+        intro = t * t * (3 - 2 * t);
+
+        fade += (targetOpacity - fade) * Math.min(1, dt * 3);
+        uniforms.uOpacity.value = fade * intro;
+
+        camera.position.z = restZ + INTRO_DOLLY * (1 - intro);
 
         if (!reduced) {
           points.rotation.y += dt * 0.055;

@@ -27,6 +27,10 @@ module.exports = {
         "fluid-h3": ["clamp(1.25rem, 1.1rem + 0.7vw, 1.75rem)", { lineHeight: "1.25", letterSpacing: "-0.01em" }],
         "fluid-h2": ["clamp(1.75rem, 1.4rem + 1.6vw, 3rem)", { lineHeight: "1.1", letterSpacing: "-0.02em" }],
         "fluid-h1": ["clamp(2.5rem, 1.6rem + 4.2vw, 5.25rem)", { lineHeight: "0.98", letterSpacing: "-0.035em" }],
+        // Article masthead. fluid-h1 is a hero size — at 5.25rem it wraps every
+        // 8 characters inside a reading measure. This sits a clear step above
+        // the largest in-article heading (fluid-h2) without shouting.
+        "fluid-title": ["clamp(2.25rem, 1.55rem + 2.9vw, 4rem)", { lineHeight: "1.05", letterSpacing: "-0.03em" }],
       },
       maxWidth: {
         prose: "62ch",
