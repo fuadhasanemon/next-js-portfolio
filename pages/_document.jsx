@@ -13,13 +13,8 @@ export default function Document() {
         <meta name="theme-color" content="#fbfbfd" media="(prefers-color-scheme: light)" />
 
         {/* Two families carry the whole system: Outfit for UI, Space Mono for
-            labels. Homemade Apple is the single decorative accent. */}
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="true" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&family=Homemade+Apple&display=swap"
-          rel="stylesheet"
-        />
+            labels. Homemade Apple is the single decorative accent. All three
+            are self-hosted via next/font — see pages/_app.jsx. */}
       </Head>
       <body className="overflow-x-hidden">
         {/* Reveal animations only arm when scripting is available, so the page

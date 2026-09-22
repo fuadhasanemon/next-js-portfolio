@@ -31,6 +31,16 @@ const Wordmark = () => (
   </Link>
 );
 
+/**
+ * The icon buttons read as 36px circles, which is the proportion the bar is
+ * drawn around, but 36px is under the 44x44 minimum for a reliable tap. A
+ * centred, transparent pseudo-element carries the extra 8px so the target is
+ * compliant without the visible circle — or its hover fill — changing size.
+ */
+const HIT_AREA =
+  "relative before:absolute before:left-1/2 before:top-1/2 before:h-11 before:w-11 " +
+  "before:-translate-x-1/2 before:-translate-y-1/2 before:content-['']";
+
 const Header = () => {
   const { resolvedTheme, setTheme } = useTheme();
   const router = useRouter();
@@ -119,12 +129,12 @@ const Header = () => {
           </ul>
         </nav>
 
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={toggleTheme}
             aria-label={isDark ? "Switch to light theme" : "Switch to dark theme"}
-            className="grid h-9 w-9 place-items-center rounded-full text-muted transition-colors duration-300 hover:bg-ink/5 hover:text-ink"
+            className={`${HIT_AREA} grid h-9 w-9 place-items-center rounded-full text-muted transition-colors duration-300 hover:bg-ink/5 hover:text-ink`}
           >
             {mounted &&
               (isDark ? (
@@ -140,7 +150,7 @@ const Header = () => {
             aria-label={open ? "Close menu" : "Open menu"}
             aria-expanded={open}
             aria-controls="mobile-nav"
-            className="grid h-9 w-9 place-items-center rounded-full text-ink transition-colors duration-300 hover:bg-ink/5 md:hidden"
+            className={`${HIT_AREA} grid h-9 w-9 place-items-center rounded-full text-ink transition-colors duration-300 hover:bg-ink/5 md:hidden`}
           >
             <span className="flex h-3 w-[18px] flex-col justify-between">
               <span

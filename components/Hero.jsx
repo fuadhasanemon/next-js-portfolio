@@ -14,6 +14,17 @@ const HeroField = dynamic(() => import("@/components/three/HeroField"), {
   ssr: false,
 });
 
+/**
+ * One word of the hero headline. The outer span clips; the inner span does the
+ * travel, so a word rises into its own line rather than sliding across its
+ * neighbours. `delay` stacks on top of the headline's own --reveal-delay.
+ */
+const Word = ({ delay = 0, children }) => (
+  <span className="hero-word">
+    <span style={{ "--word-delay": `${delay}ms` }}>{children}</span>
+  </span>
+);
+
 const Hero = ({ years, months }) => {
   const stats = [
     { value: `${years}+`, label: "Years shipping" },
@@ -54,7 +65,11 @@ const Hero = ({ years, months }) => {
           <div className="max-w-3xl">
             <div
               className="reveal inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs text-muted"
-              style={{ borderColor: "rgb(var(--line) / 0.15)" }}
+              style={{
+                "--reveal-y": "12px",
+                "--reveal-blur": "4px",
+                borderColor: "rgb(var(--line) / 0.15)",
+              }}
             >
               <span className="relative flex h-1.5 w-1.5">
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-75" />
@@ -63,15 +78,21 @@ const Hero = ({ years, months }) => {
               Available for new work
             </div>
 
-            <h1 className="reveal mt-7 text-fluid-h1 font-semibold text-ink" style={{ "--reveal-delay": "80ms" }}>
-              Interfaces built
+            <h1
+              className="reveal reveal-mask mt-7 text-fluid-h1 font-semibold text-ink"
+              style={{ "--reveal-delay": "100ms" }}
+            >
+              <Word delay={0}>Interfaces</Word> <Word delay={85}>built</Word>
               <br />
-              with <span className="gradient-text animate-shimmer">intent</span>.
+              <Word delay={170}>with</Word>{" "}
+              <Word delay={255}>
+                <span className="gradient-text animate-shimmer">intent</span>.
+              </Word>
             </h1>
 
             <p
               className="reveal mt-7 max-w-prose text-fluid-lead text-muted"
-              style={{ "--reveal-delay": "180ms" }}
+              style={{ "--reveal-delay": "400ms", "--reveal-y": "18px" }}
             >
               I&apos;m Fuad — a software engineer who designs and builds modern,
               reactive web applications. Careful typography, honest motion, and
@@ -80,7 +101,7 @@ const Hero = ({ years, months }) => {
 
             <div
               className="reveal mt-9 flex flex-wrap items-center gap-3"
-              style={{ "--reveal-delay": "260ms" }}
+              style={{ "--reveal-delay": "520ms", "--reveal-y": "16px" }}
             >
               <Link href="/work" className="btn-primary">
                 View selected work
@@ -94,7 +115,8 @@ const Hero = ({ years, months }) => {
             <dl
               className="reveal mt-12 grid max-w-lg grid-cols-3 gap-6 border-t pt-7"
               style={{
-                "--reveal-delay": "340ms",
+                "--reveal-delay": "640ms",
+                "--reveal-y": "20px",
                 borderColor: "rgb(var(--line) / 0.12)",
               }}
             >
@@ -115,7 +137,7 @@ const Hero = ({ years, months }) => {
           {/* Identity card — the human anchor next to the abstract field. */}
           <div
             className="reveal card w-full max-w-xs p-6 lg:w-72"
-            style={{ "--reveal-delay": "420ms", "--reveal-y": "34px" }}
+            style={{ "--reveal-delay": "720ms", "--reveal-y": "34px" }}
           >
             <div className="flex items-center gap-4">
               <div className="animate-floatY">

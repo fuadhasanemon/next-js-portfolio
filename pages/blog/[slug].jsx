@@ -10,6 +10,29 @@ import { deriveExcerpt, extractToc, markdownToHtml } from "@/lib/markdown";
 import { prisma, revalidateFor, safeQuery, serialize } from "@/lib/prisma";
 import { absoluteUrl, readingTime, truncate } from "@/lib/site";
 
+/**
+ * One table of contents, rendered into the sidebar on large screens and into
+ * a disclosure everywhere else. Only ever one of the two is displayed, so the
+ * shared aria-label cannot collide.
+ */
+const TocList = ({ toc }) => (
+  <ul
+    className="space-y-2.5 border-l pl-4"
+    style={{ borderColor: "rgb(var(--line) / 0.12)" }}
+  >
+    {toc.map((item) => (
+      <li key={item.id} className={item.depth === 3 ? "pl-3" : ""}>
+        <a
+          href={`#${item.id}`}
+          className="block py-1 text-sm leading-snug text-muted transition-colors duration-300 hover:text-accent"
+        >
+          {item.text}
+        </a>
+      </li>
+    ))}
+  </ul>
+);
+
 export default function Article({ post, html, toc, related, minutes }) {
   const revealRef = useRevealGroup();
 
@@ -20,6 +43,9 @@ export default function Article({ post, html, toc, related, minutes }) {
     post.updatedAt && post.publishedAt && post.updatedAt !== post.publishedAt
       ? post.updatedAt
       : null;
+
+  // Below three headings a contents list is longer than what it indexes.
+  const hasToc = toc.length > 2;
 
   return (
     <>
@@ -47,21 +73,30 @@ export default function Article({ post, html, toc, related, minutes }) {
       />
 
       <div ref={revealRef} className="shell pb-28 pt-36 sm:pt-40">
-        <Reveal as="nav" className="mb-8" aria-label="Breadcrumb">
-          <Link href="/blog" className="font-space text-xs text-faint hover:text-ink">
+        <Reveal as="nav" className="mb-10" aria-label="Breadcrumb">
+          <Link
+            href="/blog"
+            className="font-space text-xs text-faint transition-colors duration-300 hover:text-ink"
+          >
             ← Blog
           </Link>
         </Reveal>
 
+        {/* Masthead, cover and body all carry .article-rail, so the piece keeps
+            one left edge and one measure from the title to the last link. */}
         <article>
-          <header className="mx-auto max-w-prose">
+          <header className="article-rail">
             {post.category && (
               <Reveal as="p" className="eyebrow" style={{ color: "rgb(var(--accent))" }}>
                 {post.category}
               </Reveal>
             )}
 
-            <Reveal as="h1" delay={60} className="mt-4 text-fluid-h1 font-semibold text-ink">
+            <Reveal
+              as="h1"
+              delay={60}
+              className="mt-5 text-fluid-title font-semibold text-ink"
+            >
               {post.title}
             </Reveal>
 
@@ -71,9 +106,13 @@ export default function Article({ post, html, toc, related, minutes }) {
               </Reveal>
             )}
 
+            {/* The masthead ends at this hairline; the credits sit below it. */}
+            <Reveal delay={170} y={0} blur={0} className="rule mt-9" />
+
             <Reveal
-              delay={160}
-              className="mt-7 flex flex-wrap items-center gap-x-3 gap-y-1 font-space text-xs text-faint"
+              delay={210}
+              y={12}
+              className="mt-5 flex flex-wrap items-center gap-x-3 gap-y-1 font-space text-xs text-faint"
             >
               <span className="text-muted">{post.author}</span>
               <span aria-hidden="true">·</span>
@@ -93,8 +132,8 @@ export default function Article({ post, html, toc, related, minutes }) {
 
           {post.coverImage && (
             <Reveal
-              delay={120}
-              className="relative mt-14 aspect-[16/9] overflow-hidden rounded-2xl border"
+              delay={250}
+              className="article-rail relative mt-12 aspect-[16/9] overflow-hidden rounded-2xl border"
               style={{ borderColor: "rgb(var(--line) / 0.12)" }}
             >
               <Image
@@ -102,14 +141,23 @@ export default function Article({ post, html, toc, related, minutes }) {
                 priority
                 src={post.coverImage}
                 alt={post.coverAlt || ""}
-                sizes="(max-width: 1024px) 100vw, 1024px"
+                sizes="(max-width: 1024px) 100vw, 720px"
                 className="object-cover"
               />
             </Reveal>
           )}
 
-          <div className="mt-16 lg:grid lg:grid-cols-[minmax(0,1fr)_15rem] lg:gap-14">
-            <div className="mx-auto w-full max-w-prose lg:mx-0">
+          <div className="article-grid mt-14">
+            <div className="article-rail">
+              {hasToc && (
+                <details className="toc-inline mb-12 lg:hidden">
+                  <summary>Contents</summary>
+                  <nav aria-label="Table of contents" className="pb-5">
+                    <TocList toc={toc} />
+                  </nav>
+                </details>
+              )}
+
               {/* Reveal is intentionally absent on the body: long-form text
                   should never wait on an observer to become readable. */}
               <div className="prose" dangerouslySetInnerHTML={{ __html: html }} />
@@ -120,12 +168,13 @@ export default function Article({ post, html, toc, related, minutes }) {
                   style={{ borderColor: "rgb(var(--line) / 0.1)" }}
                 >
                   <h2 className="eyebrow">Tags</h2>
-                  <ul className="mt-4 flex flex-wrap gap-2">
+                  {/* Labels, not controls — nothing here filters, so nothing
+                      here is dressed up as a button. */}
+                  <ul className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2">
                     {post.tags.map((tag) => (
                       <li
                         key={tag}
-                        className="rounded-full border px-3 py-1 text-sm text-muted"
-                        style={{ borderColor: "rgb(var(--line) / 0.14)" }}
+                        className="font-space text-xs uppercase tracking-[0.12em] text-faint"
                       >
                         {tag}
                       </li>
@@ -135,11 +184,11 @@ export default function Article({ post, html, toc, related, minutes }) {
               )}
 
               <div
-                className="mt-12 rounded-2xl border p-6"
-                style={{ borderColor: "rgb(var(--line) / 0.12)" }}
+                className="mt-12 border-t pt-8"
+                style={{ borderColor: "rgb(var(--line) / 0.1)" }}
               >
-                <p className="text-fluid-base text-muted">
-                  Written by{" "}
+                <h2 className="eyebrow">Written by</h2>
+                <p className="mt-4 text-fluid-base text-muted">
                   <Link href="/about" className="link-underline text-ink">
                     {post.author}
                   </Link>
@@ -156,22 +205,11 @@ export default function Article({ post, html, toc, related, minutes }) {
               </div>
             </div>
 
-            {toc.length > 2 && (
-              <aside className="mt-14 hidden lg:sticky lg:top-28 lg:mt-0 lg:block lg:self-start">
+            {hasToc && (
+              <aside className="hidden lg:sticky lg:top-28 lg:block lg:self-start">
                 <h2 className="eyebrow">On this page</h2>
-                <nav className="mt-4">
-                  <ul className="space-y-2 border-l pl-4" style={{ borderColor: "rgb(var(--line) / 0.12)" }}>
-                    {toc.map((item) => (
-                      <li key={item.id} className={item.depth === 3 ? "pl-3" : ""}>
-                        <a
-                          href={`#${item.id}`}
-                          className="block text-sm leading-snug text-muted transition-colors hover:text-accent"
-                        >
-                          {item.text}
-                        </a>
-                      </li>
-                    ))}
-                  </ul>
+                <nav aria-label="Table of contents" className="mt-4">
+                  <TocList toc={toc} />
                 </nav>
               </aside>
             )}

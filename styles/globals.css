@@ -7,33 +7,88 @@
    --------------------------------------------------------------- */
 @layer base {
   :root {
-    --bg: 251 251 253;
+    color-scheme: light;
+    /* Off-white, not white. --surface is pure white, so this gap is the only
+       thing that lets a card read as a surface: at 251 251 253 the difference
+       was dL* 0.67, below the threshold of visibility. */
+    --bg: 246 246 250;
     --surface: 255 255 255;
     --line: 17 17 24;
     --ink: 11 11 16;
     --muted: 92 92 104;
-    --faint: 140 140 152;
+    /* 4.96:1 on --bg and 4.56:1 on the worst surface in the theme — a card
+       over the peak of the wash plus the grain. Tuned against that composite,
+       not against the flat page: the wash alone costs ~0.3 of a ratio point. */
+    --faint: 106 106 116;
     --accent: 109 40 217;
+    /* Text that sits on an --accent fill. White only works where the accent
+       is dark enough to carry it, which is light mode only. */
+    --on-accent: 255 255 255;
     --accent-2: 13 148 136;
     --glow-a: 168 85 247;
     --glow-b: 45 212 191;
     --glow-c: 249 115 22;
-    --line-alpha: 0.1;
+    /* Hairlines on a light page need more alpha than on a dark one to carry
+       the same weight: 0.1 read at dL* 8.1 against dark mode's 13.0. */
+    --line-alpha: 0.13;
+
+    /* Page wash + paper tooth. Both are below the visible threshold if left
+       at a single cross-theme value, so each theme sets its own. */
+    --wash-a: 0.045;
+    --wash-b: 0.045;
+    --grain-opacity: 0.055;
+
+    /* One reading measure for every long-form column. Resolved in ch against
+       the body size, so it is literally ~66 characters of running text and
+       stays correct as the fluid type scale grows. */
+    --measure: 66ch;
+
+    /* Syntax colours are their own tokens because --glow-* are built for
+       blurred fills at 16-30% opacity and fail AA as solid text: on the code
+       surface they measured 1.66:1 (strings) to 3.54:1 (keywords). These are
+       deeper members of the same hue families, measured against the code
+       surface as it sits over the peak of the page wash — 4.55:1 at worst. */
+    --code-keyword: 91 33 182;
+    --code-string: 13 104 97;
+    --code-number: 154 52 18;
+    --code-type: 12 100 124;
+    --code-func: 109 40 217;
+    --code-comment: 98 98 108;
+    --code-deletion: 180 35 24;
   }
 
   .dark {
+    color-scheme: dark;
     --bg: 8 8 11;
     --surface: 18 18 23;
     --line: 255 255 255;
     --ink: 244 244 247;
     --muted: 154 154 166;
-    --faint: 110 110 122;
+    /* 4.77:1 on a card over the wash and grain, the worst case in this theme. */
+    --faint: 128 128 140;
     --accent: 167 139 250;
+    /* The dark accent is a light lavender; white on it is 2.72:1. Near-black
+       reads at 7.21:1 and keeps the accent colour itself unchanged. */
+    --on-accent: 11 11 16;
     --accent-2: 45 212 191;
     --glow-a: 147 51 234;
     --glow-b: 20 184 166;
     --glow-c: 234 88 12;
     --line-alpha: 0.12;
+
+    /* A wash has to work harder on near-black before it registers. */
+    --wash-a: 0.09;
+    --wash-b: 0.05;
+    --grain-opacity: 0.06;
+
+    /* Lighter members of the same families; 5.57:1 at worst. */
+    --code-keyword: 196 181 253;
+    --code-string: 45 212 191;
+    --code-number: 253 186 116;
+    --code-type: 94 234 212;
+    --code-func: 167 139 250;
+    --code-comment: 139 139 153;
+    --code-deletion: 252 165 165;
   }
 
   html {
@@ -56,6 +111,14 @@
 
   a {
     text-decoration: none;
+  }
+
+  /* Native dropdown rows: paint them explicitly so they stay legible in dark
+     mode, where the option text inherits --ink (near white). */
+  select option,
+  select optgroup {
+    background-color: rgb(var(--surface));
+    color: rgb(var(--ink));
   }
 
   h1, h2, h3, h4 {
@@ -100,6 +163,59 @@
     @apply font-space text-eyebrow uppercase text-faint;
   }
 
+  /* The article's single editorial column. Everything that belongs to the
+     piece — masthead, cover, body, tags, author — sits in this rail, so the
+     whole article shares one left edge and one measure. Carrying the body
+     font-size is what makes --measure resolve as body characters. */
+  .article-rail {
+    @apply text-fluid-base;
+    max-width: var(--measure);
+  }
+
+  /* Single column until the viewport can hold the measure plus a sidebar. */
+  .article-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  @media (min-width: 1024px) {
+    .article-grid {
+      grid-template-columns: minmax(0, 1fr) 14rem;
+      column-gap: 4rem;
+      align-items: start;
+    }
+  }
+
+  /* Contents disclosure, shown wherever the sidebar does not fit. Native
+     <details>, so it needs no JavaScript and is keyboard-operable for free. */
+  .toc-inline {
+    border-top: 1px solid rgb(var(--line) / var(--line-alpha));
+    border-bottom: 1px solid rgb(var(--line) / var(--line-alpha));
+  }
+
+  .toc-inline > summary {
+    @apply eyebrow flex cursor-pointer list-none items-center justify-between gap-4 py-4;
+  }
+
+  .toc-inline > summary::-webkit-details-marker {
+    display: none;
+  }
+
+  /* The glyph is the state; the label never moves. */
+  .toc-inline > summary::after {
+    content: "+";
+    font-size: 1rem;
+    line-height: 1;
+    color: rgb(var(--faint));
+    transition: color 0.25s ease-out;
+  }
+  .toc-inline[open] > summary::after {
+    content: "−";
+  }
+  .toc-inline > summary:hover::after {
+    color: rgb(var(--accent));
+  }
+
   .rule {
     @apply h-px w-full border-0;
     background: linear-gradient(
@@ -141,7 +257,8 @@
   }
 
   .btn-primary {
-    @apply btn text-white;
+    @apply btn;
+    color: rgb(var(--on-accent));
     background: rgb(var(--accent));
   }
   .btn-primary:hover {
@@ -197,18 +314,85 @@
     filter: none;
   }
 
+  /* Word-level headline reveal — a variant of .reveal, not a replacement.
+     The container itself stays put; each word travels up inside its own
+     clipping box, so the line resolves like type being set rather than a
+     block fading in. Stagger comes from --word-delay on each word. */
+  .js .reveal.reveal-mask {
+    opacity: 1;
+    transform: none;
+    filter: none;
+    transition: none;
+  }
+
+  .hero-word {
+    display: inline-block;
+    /* Clipped with clip-path rather than overflow: hidden. An inline-block
+       with overflow takes its baseline from its bottom margin edge, which
+       would drop the whole headline off the text baseline; clip-path leaves
+       alignment — and therefore the hero's layout — untouched. The negative
+       insets give ascenders, the period and the negative tracking room, so
+       the mask crops the motion and never the typeface. */
+    clip-path: inset(-0.15em -0.1em -0.1em 0);
+  }
+
+  .js .hero-word > span {
+    display: inline-block;
+    opacity: 0;
+    transform: translate3d(0, 125%, 0);
+    /* Opacity resolves ahead of travel so the word is already legible while it
+       settles — reads as weight rather than as a fade. */
+    transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+      transform 1.1s cubic-bezier(0.16, 1, 0.3, 1);
+    transition-delay: calc(var(--reveal-delay, 0ms) + var(--word-delay, 0ms));
+  }
+
+  .js .reveal.reveal-mask.is-visible .hero-word > span {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+
   .mask-fade-x {
     -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
     mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
   }
 
+  /* Own stacking context, so the two decorative layers below can sit at a
+     negative z-index — behind the page content instead of painted over it,
+     which is where a fixed z-index: 0 pseudo-element ends up. */
+  .grain {
+    isolation: isolate;
+  }
+
+  /* Soft light on the page. Fixed rather than scrolling, so it reads as
+     illumination rather than a banner that slides away, and an inner route is
+     never a flat field. Well under the Hero aurora, which paints above this. */
   .grain::before {
     content: "";
     position: fixed;
     inset: 0;
-    z-index: 0;
+    z-index: -2;
     pointer-events: none;
-    opacity: 0.035;
+    background-image: radial-gradient(
+        55rem 30rem at 50% -10%,
+        rgb(var(--glow-a) / var(--wash-a)),
+        transparent 68%
+      ),
+      radial-gradient(
+        42rem 26rem at 88% 6%,
+        rgb(var(--glow-b) / var(--wash-b)),
+        transparent 70%
+      );
+  }
+
+  /* Paper tooth, over the wash and still under the content. */
+  .grain::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    opacity: var(--grain-opacity);
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E");
   }
 }
@@ -229,6 +413,10 @@
     transform: none !important;
     filter: none !important;
   }
+  .hero-word > span {
+    opacity: 1 !important;
+    transform: none !important;
+  }
 }
 
 /* ---------------------------------------------------------------
@@ -238,7 +426,7 @@
 @layer components {
   .prose {
     @apply text-fluid-base text-muted;
-    max-width: 68ch;
+    max-width: var(--measure);
   }
 
   .prose > * + * {
@@ -337,10 +525,20 @@
     margin-bottom: 2.5em;
   }
 
+  /* The scroll container is a wrapper, never the table itself: overriding a
+     table's display strips its role from the accessibility tree. Added by the
+     markdown pipeline, which also gives it a tab stop (WCAG 2.1.1).
+
+     Must stay scoped under .prose. The class is written at build time and is
+     never seen by Tailwind's scanner, so on its own this rule would be purged
+     out of @layer components; the .prose ancestor is what keeps it alive. */
+  .prose .prose-scroll {
+    overflow-x: auto;
+    max-width: 100%;
+  }
+
   .prose table {
     width: 100%;
-    display: block;
-    overflow-x: auto;
     border-collapse: collapse;
     font-size: 0.925em;
   }
@@ -381,58 +579,64 @@
   }
 }
 
-/* highlight.js tokens, mapped to the site palette rather than a vendor theme. */
-@layer components {
-  .hljs-comment,
-  .hljs-quote {
-    color: rgb(var(--faint));
-    font-style: italic;
-  }
-  .hljs-keyword,
-  .hljs-selector-tag,
-  .hljs-literal,
-  .hljs-doctag {
-    color: rgb(var(--glow-a));
-  }
-  .hljs-string,
-  .hljs-regexp,
-  .hljs-addition {
-    color: rgb(var(--glow-b));
-  }
-  .hljs-number,
-  .hljs-variable,
-  .hljs-template-variable,
-  .hljs-attr,
-  .hljs-attribute {
-    color: rgb(var(--glow-c));
-  }
-  .hljs-title,
-  .hljs-title.function_,
-  .hljs-section,
-  .hljs-name {
-    color: rgb(var(--accent));
-    font-weight: 600;
-  }
-  .hljs-type,
-  .hljs-built_in,
-  .hljs-class .hljs-title {
-    color: rgb(var(--accent-2));
-  }
-  .hljs-meta,
-  .hljs-symbol,
-  .hljs-bullet,
-  .hljs-link {
-    color: rgb(var(--faint));
-  }
-  .hljs-deletion {
-    color: #e5484d;
-  }
-  .hljs-emphasis {
-    font-style: italic;
-  }
-  .hljs-strong {
-    font-weight: 700;
-  }
+/* highlight.js tokens. Mapped to the --code-* tokens rather than --glow-*:
+   the glow tokens are tuned for blurred background fills and fail AA as text
+   (strings measured 1.66:1 on the light code surface). Every rule below is
+   at least 4.5:1 in both themes.
+
+   Deliberately NOT in @layer components. These classes are written by
+   rehype-highlight at build time into dangerouslySetInnerHTML, so they never
+   appear in the files Tailwind scans — inside a layer the whole block is
+   purged and code blocks render monochrome. Plain CSS is emitted verbatim. */
+.hljs-comment,
+.hljs-quote {
+  color: rgb(var(--code-comment));
+  font-style: italic;
+}
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-literal,
+.hljs-doctag {
+  color: rgb(var(--code-keyword));
+}
+.hljs-string,
+.hljs-regexp,
+.hljs-addition {
+  color: rgb(var(--code-string));
+}
+.hljs-number,
+.hljs-variable,
+.hljs-template-variable,
+.hljs-attr,
+.hljs-attribute {
+  color: rgb(var(--code-number));
+}
+.hljs-title,
+.hljs-title.function_,
+.hljs-section,
+.hljs-name {
+  color: rgb(var(--code-func));
+  font-weight: 600;
+}
+.hljs-type,
+.hljs-built_in,
+.hljs-class .hljs-title {
+  color: rgb(var(--code-type));
+}
+.hljs-meta,
+.hljs-symbol,
+.hljs-bullet,
+.hljs-link {
+  color: rgb(var(--code-comment));
+}
+.hljs-deletion {
+  color: rgb(var(--code-deletion));
+}
+.hljs-emphasis {
+  font-style: italic;
+}
+.hljs-strong {
+  font-weight: 700;
 }
 
 /* ---------------------------------------------------------------

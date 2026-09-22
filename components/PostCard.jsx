@@ -13,7 +13,7 @@ export const formatDate = (value) =>
     : "";
 
 export const PostMeta = ({ post, className = "" }) => (
-  <p className={`flex flex-wrap items-center gap-x-2 gap-y-1 font-space text-[0.7rem] text-faint ${className}`}>
+  <p className={`flex flex-wrap items-center gap-x-2 gap-y-1 font-space text-xs text-faint ${className}`}>
     {post.category && (
       <>
         <span style={{ color: "rgb(var(--accent))" }}>{post.category}</span>

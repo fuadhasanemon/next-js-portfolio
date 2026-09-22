@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 
@@ -6,6 +6,7 @@ import AdminShell from "@/components/admin/AdminShell";
 import { Button, Field, Input, Panel, Select, Textarea, Toggle } from "@/components/admin/Fields";
 import ImageInput from "@/components/admin/ImageInput";
 import MarkdownEditor from "@/components/admin/MarkdownEditor";
+import useUnsavedChanges from "@/hooks/useUnsavedChanges";
 import { prisma, serialize } from "@/lib/prisma";
 import { CATEGORIES, readingTime, slugify } from "@/lib/site";
 
@@ -41,17 +42,40 @@ const toLocalInput = (value) => {
   )}:${pad(d.getMinutes())}`;
 };
 
+/** The live form and the saved baseline must share a shape to be comparable. */
+const fromPost = (post) => ({
+  ...EMPTY,
+  ...(post || {}),
+  publishedAt: toLocalInput(post?.publishedAt),
+});
+
 export default function PostEditor({ post, isNew }) {
   const router = useRouter();
-  const [form, setForm] = useState({
-    ...EMPTY,
-    ...(post || {}),
-    publishedAt: toLocalInput(post?.publishedAt),
-  });
+  const [form, setForm] = useState(() => fromPost(post));
+  // Snapshot of what is on the server; anything else means unsaved edits.
+  const [saved, setSaved] = useState(() => JSON.stringify(fromPost(post)));
   // "save" | "toggle" | null — so only the clicked button shows a spinner.
   const [pending, setPending] = useState(null);
   const busy = pending !== null;
   const [error, setError] = useState("");
+
+  const dirty = JSON.stringify(form) !== saved;
+  const release = useUnsavedChanges(dirty);
+
+  /** Adopt server data as both the form contents and the clean baseline. */
+  const adopt = (post) => {
+    const next = fromPost(post);
+    setForm(next);
+    setSaved(JSON.stringify(next));
+  };
+
+  // `/admin/posts/new` and `/admin/posts/[id]` are the same route, so creating
+  // an article swaps the props on the mounted component instead of remounting
+  // it. Without this the editor would keep showing the blank `new` state.
+  useEffect(() => {
+    adopt(post);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [post?.id]);
 
   const set = (key) => (value) => setForm((f) => ({ ...f, [key]: value }));
   const onField = (key) => (e) => set(key)(e.target.value);
@@ -69,22 +93,35 @@ export default function PostEditor({ post, isNew }) {
       publishedAt: form.publishedAt ? new Date(form.publishedAt).toISOString() : null,
     };
 
-    const res = await fetch(isNew ? "/api/admin/posts" : `/api/admin/posts/${post.id}`, {
-      method: isNew ? "POST" : "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
+    try {
+      const res = await fetch(
+        isNew ? "/api/admin/posts" : `/api/admin/posts/${post.id}`,
+        {
+          method: isNew ? "POST" : "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        }
+      );
 
-    if (!res.ok) {
-      setError((await res.json()).error || "Save failed");
-      setPending(null);
-      return;
-    }
+      if (!res.ok) {
+        setError((await res.json().catch(() => ({}))).error || "Save failed");
+        return;
+      }
 
-    const saved = await res.json();
-    if (isNew) router.replace(`/admin/posts/${saved.id}`);
-    else {
-      setForm({ ...EMPTY, ...saved, publishedAt: toLocalInput(saved.publishedAt) });
+      const result = await res.json();
+
+      if (isNew) {
+        // The redirect is ours, and the article is already stored — the guard
+        // must not question it. Awaiting the navigation is also what lets the
+        // button stop spinning once the saved article is on screen.
+        release();
+        await router.replace(`/admin/posts/${result.id}`);
+      } else {
+        adopt(result);
+      }
+    } catch {
+      setError("Save failed — check your connection and try again.");
+    } finally {
       setPending(null);
     }
   };
@@ -174,6 +211,9 @@ export default function PostEditor({ post, isNew }) {
             </Field>
 
             {error && <p className="text-sm text-red-500">{error}</p>}
+            {dirty && !error && (
+              <p className="text-xs text-faint">Unsaved changes</p>
+            )}
 
             <div className="flex flex-col gap-2">
               <Button
@@ -205,7 +245,12 @@ export default function PostEditor({ post, isNew }) {
             <Field label="Category">
               <Select value={form.category} onChange={onField("category")}>
                 <option value="">None</option>
-                {CATEGORIES.map((c) => (
+                {/* An older article may hold a category the preset list no
+                    longer carries — keep it selectable rather than blank. */}
+                {(form.category && !CATEGORIES.includes(form.category)
+                  ? [form.category, ...CATEGORIES]
+                  : CATEGORIES
+                ).map((c) => (
                   <option key={c} value={c}>
                     {c}
                   </option>

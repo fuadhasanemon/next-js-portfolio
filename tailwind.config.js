@@ -15,6 +15,8 @@ module.exports = {
         faint: "rgb(var(--faint) / <alpha-value>)",
         accent: "rgb(var(--accent) / <alpha-value>)",
         accent2: "rgb(var(--accent-2) / <alpha-value>)",
+        // Text/icons placed on an --accent fill; flips per theme.
+        onAccent: "rgb(var(--on-accent) / <alpha-value>)",
       },
       fontSize: {
         // fluid type scale — min/max clamped, tuned for 360px → 1440px
@@ -25,6 +27,10 @@ module.exports = {
         "fluid-h3": ["clamp(1.25rem, 1.1rem + 0.7vw, 1.75rem)", { lineHeight: "1.25", letterSpacing: "-0.01em" }],
         "fluid-h2": ["clamp(1.75rem, 1.4rem + 1.6vw, 3rem)", { lineHeight: "1.1", letterSpacing: "-0.02em" }],
         "fluid-h1": ["clamp(2.5rem, 1.6rem + 4.2vw, 5.25rem)", { lineHeight: "0.98", letterSpacing: "-0.035em" }],
+        // Article masthead. fluid-h1 is a hero size — at 5.25rem it wraps every
+        // 8 characters inside a reading measure. This sits a clear step above
+        // the largest in-article heading (fluid-h2) without shouting.
+        "fluid-title": ["clamp(2.25rem, 1.55rem + 2.9vw, 4rem)", { lineHeight: "1.05", letterSpacing: "-0.03em" }],
       },
       maxWidth: {
         prose: "62ch",
@@ -70,11 +76,11 @@ module.exports = {
         wave: "wave 2.5s ease-in-out infinite",
       },
       fontFamily: {
-        out: ["Outfit", "Inter", "system-ui", "sans-serif"],
-        space: ["Space Mono", "ui-monospace", "monospace"],
+        out: ["var(--font-outfit)", "Inter", "system-ui", "sans-serif"],
+        space: ["var(--font-space-mono)", "ui-monospace", "monospace"],
         deca: ["Lexend Deca", "Inter", "sans-serif"],
         syne: ["Syne", "sans-serif"],
-        app: ["Homemade Apple", "cursive"],
+        app: ["var(--font-homemade-apple)", "cursive"],
         gloria: ["Gloria Hallelujah", "cursive"],
       },
     },

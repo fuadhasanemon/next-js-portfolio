@@ -20,8 +20,15 @@ export const Textarea = ({ rows = 4, ...props }) => (
   <textarea {...props} rows={rows} className={base} style={borderStyle} />
 );
 
+// Unlike the text inputs, a select must carry an opaque background: Chrome
+// paints the open dropdown's rows with it, and a transparent one left white
+// text on white in dark mode.
 export const Select = ({ children, ...props }) => (
-  <select {...props} className={base} style={borderStyle}>
+  <select
+    {...props}
+    className={base}
+    style={{ ...borderStyle, backgroundColor: "rgb(var(--surface))" }}
+  >
     {children}
   </select>
 );
@@ -68,7 +75,7 @@ export const Button = ({
 }) => {
   const styles =
     variant === "primary"
-      ? "bg-[rgb(var(--accent))] text-white hover:opacity-90"
+      ? "bg-[rgb(var(--accent))] text-onAccent hover:opacity-90"
       : variant === "danger"
       ? "border border-red-500/40 text-red-500 hover:bg-red-500/10"
       : "border text-ink hover:border-accent/50";
