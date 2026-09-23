@@ -34,11 +34,13 @@ export const PostMeta = ({ post, className = "" }) => (
 
 const PostCard = ({ post, delay = 0, featured = false }) => (
   <Reveal as="article" delay={delay} y={26} className="group">
-    <Link href={`/blog/${post.slug}`} className={featured ? "grid gap-8 lg:grid-cols-2 lg:items-center" : "block"}>
+    <Link href={`/blog/${post.slug}`} className={featured ? "grid gap-8 lg:grid-cols-2 lg:items-stretch" : "block"}>
       {post.coverImage && (
         <div
           className={`relative overflow-hidden rounded-xl border ${
-            featured ? "aspect-[16/10]" : "aspect-[16/9]"
+            featured
+              ? "aspect-[16/10] lg:aspect-auto lg:h-full"
+              : "aspect-[16/9]"
           }`}
           style={{ borderColor: "rgb(var(--line) / 0.12)" }}
         >
