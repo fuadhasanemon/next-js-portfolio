@@ -9,6 +9,7 @@ const SOCIALS = [
 ];
 
 const PAGES = [
+  { label: "Contact", href: "/#contact" },
   { label: "Timeline", href: "/timeline" },
   { label: "Work", href: "/work" },
   { label: "Blog", href: "/blog" },

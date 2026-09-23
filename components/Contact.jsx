@@ -2,6 +2,7 @@ import { BsArrowUpRight } from "react-icons/bs";
 import { TfiFacebook, TfiLinkedin } from "react-icons/tfi";
 import { HiOutlineMail } from "react-icons/hi";
 
+import ContactForm from "@/components/ContactForm";
 import Reveal from "@/components/Reveal";
 
 const CHANNELS = [
@@ -44,7 +45,7 @@ const Contact = () => (
       }}
     />
 
-    <div className="grid gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] lg:items-center">
+    <div className="grid gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,20rem)] lg:items-start">
       <div>
         <p className="eyebrow">Contact</p>
         <h2 className="mt-4 text-fluid-h2 font-semibold text-ink">
@@ -56,10 +57,20 @@ const Contact = () => (
           read everything and reply within a day or two.
         </p>
 
-        <a href="mailto:fuadhasanemon8@gmail.com" className="btn-primary mt-8">
-          Start a conversation
-          <BsArrowUpRight className="h-3.5 w-3.5" />
-        </a>
+        <div className="mt-8">
+          <ContactForm />
+        </div>
+
+        <p className="mt-5 text-xs text-faint">
+          Prefer email? Write to{" "}
+          <a
+            href="mailto:fuadhasanemon8@gmail.com"
+            className="link-underline text-muted"
+          >
+            fuadhasanemon8@gmail.com
+          </a>
+          .
+        </p>
       </div>
 
       <ul className="flex flex-col divide-y" style={{ borderColor: "rgb(var(--line) / 0.1)" }}>

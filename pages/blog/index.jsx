@@ -101,9 +101,9 @@ export default function Blog({ featured, posts, categories }) {
               See my work
             </Link>{" "}
             or{" "}
-            <a href="mailto:fuadhasanemon8@gmail.com" className="link-underline text-ink">
+            <Link href="/#contact" className="link-underline text-ink">
               get in touch
-            </a>
+            </Link>
             .
           </p>
         </Reveal>

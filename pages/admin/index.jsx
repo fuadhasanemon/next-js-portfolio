@@ -37,6 +37,15 @@ export default function AdminDashboard({ stats }) {
         </div>
       </section>
 
+      <section className="mb-10">
+        <h2 className="eyebrow mb-4">Messages</h2>
+        <div className="grid gap-4 sm:grid-cols-3">
+          <Stat label="Total messages" value={stats.messages} href="/admin/messages" />
+          <Stat label="New" value={stats.messagesNew} href="/admin/messages" />
+          <Stat label="Archived" value={stats.messagesArchived} />
+        </div>
+      </section>
+
       <div className="flex flex-wrap gap-3">
         <Link href="/admin/projects/new" className="btn-primary">
           New project
@@ -50,11 +59,22 @@ export default function AdminDashboard({ stats }) {
 }
 
 export async function getServerSideProps() {
-  const [projects, projectsPublished, posts, postsPublished] = await Promise.all([
+  const [
+    projects,
+    projectsPublished,
+    posts,
+    postsPublished,
+    messages,
+    messagesNew,
+    messagesArchived,
+  ] = await Promise.all([
     prisma.project.count(),
     prisma.project.count({ where: { published: true } }),
     prisma.post.count(),
     prisma.post.count({ where: { published: true } }),
+    prisma.contactMessage.count(),
+    prisma.contactMessage.count({ where: { status: "NEW" } }),
+    prisma.contactMessage.count({ where: { status: "ARCHIVED" } }),
   ]);
 
   return {
@@ -66,6 +86,9 @@ export async function getServerSideProps() {
         posts,
         postsPublished,
         postsDraft: posts - postsPublished,
+        messages,
+        messagesNew,
+        messagesArchived,
       },
     },
   };

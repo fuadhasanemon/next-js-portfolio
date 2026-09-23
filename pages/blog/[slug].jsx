@@ -197,9 +197,9 @@ export default function Article({ post, html, toc, related, minutes }) {
                     See my work
                   </Link>{" "}
                   or{" "}
-                  <a href="mailto:fuadhasanemon8@gmail.com" className="link-underline text-ink">
+                  <Link href="/#contact" className="link-underline text-ink">
                     start a conversation
-                  </a>
+                  </Link>
                   .
                 </p>
               </div>
