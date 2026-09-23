@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 
 import Reveal from "@/components/Reveal";
 import Seo from "@/components/Seo";
@@ -116,8 +117,15 @@ export default function About() {
 
         <Reveal delay={200} className="mx-auto mt-20 max-w-prose">
           <p className="eyebrow">Contact</p>
+          <p className="mt-4 text-fluid-base text-muted">
+            The quickest way to reach me is the form — it tells me what you need
+            up front.
+          </p>
+          <Link href="/#contact" className="btn-primary mt-6">
+            Start a project
+          </Link>
           <ul
-            className="mt-5 divide-y"
+            className="mt-8 divide-y"
             style={{ borderColor: "rgb(var(--line) / 0.1)" }}
           >
             {CONTACTS.map((item) => (
