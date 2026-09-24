@@ -64,6 +64,8 @@ model Post {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
+  stats PostStats?
+
   @@index([published, publishedAt])
 }
 
@@ -85,4 +87,35 @@ model ContactMessage {
   createdAt DateTime @default(now())
 
   @@index([status, createdAt])
+}
+
+enum SubscriberStatus {
+  ACTIVE
+  UNSUBSCRIBED
+}
+
+model Subscriber {
+  id     String           @id @default(cuid())
+  email  String           @unique
+  status SubscriberStatus @default(ACTIVE)
+  // Slug of the post the reader signed up from; empty if unknown.
+  source String           @default("")
+  // Goes in every future newsletter's unsubscribe link. Generated now so
+  // existing rows never need a backfill once sending starts.
+  unsubscribeToken String @unique @default(cuid())
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, createdAt])
+}
+
+// Reader counters live apart from Post on purpose: Post.updatedAt is
+// @updatedAt and drives the "Updated" label, sitemap lastmod and JSON-LD
+// dateModified, so bumping a counter on Post would mark it edited.
+model PostStats {
+  postId String @id
+  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  views  Int    @default(0)
+  likes  Int    @default(0)
 }

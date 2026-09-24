@@ -125,6 +125,8 @@ export default function AdminPosts({ initialPosts }) {
                     </div>
                     <p className="truncate font-space text-xs text-faint">
                       /blog/{post.slug} · {formatDate(post.publishedAt)}
+                      {post.published &&
+                        ` · ${post.stats?.views ?? 0} views · ${post.stats?.likes ?? 0} likes`}
                     </p>
                   </div>
 
@@ -169,6 +171,7 @@ export default function AdminPosts({ initialPosts }) {
 export async function getServerSideProps() {
   const posts = await prisma.post.findMany({
     orderBy: [{ order: "asc" }, { createdAt: "desc" }],
+    include: { stats: true },
   });
   return { props: { initialPosts: serialize(posts) } };
 }

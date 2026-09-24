@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import ArticleTabs from "@/components/ArticleTabs";
 import PostCard from "@/components/PostCard";
 import Reveal from "@/components/Reveal";
 import SectionHeading from "@/components/SectionHeading";
@@ -13,7 +14,7 @@ import { readingTime } from "@/lib/site";
 const DESCRIPTION =
   "Notes on full-stack development, AI agents, automation with n8n and Claude Code, Next.js, React and interactive web experiences — by Fuad Hasan Emon.";
 
-export default function Blog({ featured, posts, categories }) {
+export default function Blog({ featured, posts }) {
   const revealRef = useRevealGroup();
   const all = featured ? [featured, ...posts] : posts;
 
@@ -65,32 +66,8 @@ export default function Blog({ featured, posts, categories }) {
               </section>
             )}
 
-            {categories.length > 0 && (
-              <Reveal className="mt-20">
-                <h2 className="eyebrow">Topics</h2>
-                <ul className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2">
-                  {categories.map((category) => (
-                    <li
-                      key={category}
-                      className="font-space text-xs uppercase tracking-[0.12em] text-faint"
-                    >
-                      {category}
-                    </li>
-                  ))}
-                </ul>
-              </Reveal>
-            )}
-
-            {posts.length > 0 && (
-              <section className="mt-20">
-                <h2 className="eyebrow mb-8">Latest articles</h2>
-                <div className="grid gap-x-8 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
-                  {posts.map((post, i) => (
-                    <PostCard key={post.slug} post={post} delay={(i % 3) * 110} />
-                  ))}
-                </div>
-              </section>
-            )}
+            {/* Everything except the featured post, so nothing shows twice. */}
+            {posts.length > 0 && <ArticleTabs posts={posts} />}
           </>
         )}
 
@@ -141,13 +118,11 @@ export async function getStaticProps() {
 
   const featured = posts.find((p) => p.featured) || null;
   const rest = featured ? posts.filter((p) => p.slug !== featured.slug) : posts;
-  const categories = [...new Set(posts.map((p) => p.category).filter(Boolean))];
 
   return {
     props: {
       featured: serialize(featured),
       posts: serialize(rest),
-      categories,
     },
     revalidate: revalidateFor(ok),
   };

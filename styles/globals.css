@@ -577,6 +577,35 @@
     font-size: inherit;
     color: rgb(var(--ink));
   }
+
+  /* Copy button. Written at build time like .prose-scroll, so it stays
+     scoped under .prose for the same reason. Revealed on hover or focus
+     where a pointer can hover; always shown on touch screens. */
+  .prose .code-block {
+    position: relative;
+  }
+  .prose .code-copy {
+    @apply absolute right-2 top-2 rounded-md border px-2 py-1 font-space text-xs text-muted;
+    border-color: rgb(var(--line) / 0.14);
+    background: rgb(var(--surface));
+    transition: opacity 0.2s ease-out, color 0.2s ease-out, border-color 0.2s ease-out;
+  }
+  .prose .code-copy:hover,
+  .prose .code-copy:focus-visible,
+  .prose .code-copy[data-copied] {
+    color: rgb(var(--accent));
+    border-color: rgb(var(--accent) / 0.5);
+  }
+  @media (hover: hover) {
+    .prose .code-copy {
+      opacity: 0;
+    }
+    .prose .code-block:hover .code-copy,
+    .prose .code-copy:focus-visible,
+    .prose .code-copy[data-copied] {
+      opacity: 1;
+    }
+  }
 }
 
 /* highlight.js tokens. Mapped to the --code-* tokens rather than --glow-*:
@@ -662,6 +691,19 @@
     );
     transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1),
       opacity 0.22s ease-out;
+  }
+
+  /* Article reading progress. Above the header (z-50), below the route bar. */
+  .reading-progress {
+    position: fixed;
+    inset-inline: 0;
+    top: 0;
+    z-index: 60;
+    height: 2px;
+    transform-origin: left center;
+    transform: scaleX(0);
+    pointer-events: none;
+    background: rgb(var(--accent));
   }
 
   .route-progress[data-visible="true"] {

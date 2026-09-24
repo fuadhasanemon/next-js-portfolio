@@ -1,9 +1,16 @@
+import { useRef, useState } from "react";
 import Image from "next/image";
+import { HiHeart, HiOutlineHeart } from "react-icons/hi";
 import Link from "next/link";
 
+import NewsletterSignup from "@/components/NewsletterSignup";
 import PostCard, { formatDate } from "@/components/PostCard";
+import ReadingProgress from "@/components/ReadingProgress";
 import Reveal from "@/components/Reveal";
 import Seo from "@/components/Seo";
+import ShareButtons from "@/components/ShareButtons";
+import useActiveHeading from "@/hooks/useActiveHeading";
+import usePostStats from "@/hooks/usePostStats";
 import { useRevealGroup } from "@/hooks/useReveal";
 import { blogPostingSchema, breadcrumbSchema } from "@/lib/jsonld";
 import { deriveExcerpt, extractToc, markdownToHtml } from "@/lib/markdown";
@@ -15,26 +22,77 @@ import { absoluteUrl, readingTime, truncate } from "@/lib/site";
  * a disclosure everywhere else. Only ever one of the two is displayed, so the
  * shared aria-label cannot collide.
  */
-const TocList = ({ toc }) => (
+const TocList = ({ toc, activeId }) => (
   <ul
     className="space-y-2.5 border-l pl-4"
     style={{ borderColor: "rgb(var(--line) / 0.12)" }}
   >
-    {toc.map((item) => (
-      <li key={item.id} className={item.depth === 3 ? "pl-3" : ""}>
-        <a
-          href={`#${item.id}`}
-          className="block py-1 text-sm leading-snug text-muted transition-colors duration-300 hover:text-accent"
+    {toc.map((item) => {
+      const active = item.id === activeId;
+      return (
+        <li
+          key={item.id}
+          className={`relative ${item.depth === 3 ? "pl-3" : ""}`}
         >
-          {item.text}
-        </a>
-      </li>
-    ))}
+          {/* Sits over the list's own hairline, so the marker slides along
+              the rule rather than floating beside it. */}
+          <span
+            aria-hidden="true"
+            className={`absolute -left-[17px] top-1 bottom-1 w-px bg-accent transition-opacity duration-300 ${
+              active ? "opacity-100" : "opacity-0"
+            }`}
+          />
+          <a
+            href={`#${item.id}`}
+            aria-current={active ? "location" : undefined}
+            className={`block py-1 text-sm leading-snug transition-colors duration-300 hover:text-accent ${
+              active ? "text-ink" : "text-muted"
+            }`}
+          >
+            {item.text}
+          </a>
+        </li>
+      );
+    })}
   </ul>
 );
 
-export default function Article({ post, html, toc, related, minutes }) {
+/**
+ * Older/newer neighbours by publish date. Either side can be missing at the
+ * ends of the archive, so each keeps its own column and alignment.
+ */
+const PostNav = ({ previous, next }) => (
+  <nav
+    aria-label="More articles"
+    className="article-rail mt-16 grid gap-6 border-t pt-8 sm:grid-cols-2"
+    style={{ borderColor: "rgb(var(--line) / 0.1)" }}
+  >
+    {previous && (
+      <Link href={`/blog/${previous.slug}`} className="group block">
+        <span className="eyebrow">← Previous</span>
+        <span className="mt-3 block text-fluid-base font-semibold leading-snug text-ink transition-colors duration-300 group-hover:text-accent">
+          {previous.title}
+        </span>
+      </Link>
+    )}
+    {next && (
+      <Link
+        href={`/blog/${next.slug}`}
+        className="group block sm:col-start-2 sm:text-right"
+      >
+        <span className="eyebrow">Next →</span>
+        <span className="mt-3 block text-fluid-base font-semibold leading-snug text-ink transition-colors duration-300 group-hover:text-accent">
+          {next.title}
+        </span>
+      </Link>
+    )}
+  </nav>
+);
+
+function Article({ post, html, toc, related, previous, next, minutes }) {
   const revealRef = useRevealGroup();
+  const articleRef = useRef(null);
+  const { stats, liked, toggleLike } = usePostStats(post.slug);
 
   const url = post.canonicalUrl || absoluteUrl(`/blog/${post.slug}`);
   const description = truncate(post.seoDescription || post.excerpt);
@@ -46,6 +104,34 @@ export default function Article({ post, html, toc, related, minutes }) {
 
   // Below three headings a contents list is longer than what it indexes.
   const hasToc = toc.length > 2;
+  const activeId = useActiveHeading(hasToc ? toc.map((item) => item.id) : []);
+
+  // Code-block copy buttons are baked into the HTML at build time (see
+  // lib/markdown.js); one delegated listener here serves all of them.
+  const [copyStatus, setCopyStatus] = useState("");
+  const copyTimers = useRef(new WeakMap());
+  const onProseClick = async (event) => {
+    const button = event.target.closest("[data-copy-code]");
+    if (!button) return;
+    const code = button.parentElement.querySelector("pre")?.textContent ?? "";
+    try {
+      await navigator.clipboard.writeText(code);
+    } catch {
+      return; // Clipboard blocked (insecure context, permissions).
+    }
+    button.textContent = "Copied";
+    button.dataset.copied = "";
+    setCopyStatus("Code copied to clipboard");
+    clearTimeout(copyTimers.current.get(button));
+    copyTimers.current.set(
+      button,
+      setTimeout(() => {
+        button.textContent = "Copy";
+        delete button.dataset.copied;
+        setCopyStatus("");
+      }, 2000)
+    );
+  };
 
   return (
     <>
@@ -72,6 +158,8 @@ export default function Article({ post, html, toc, related, minutes }) {
         ]}
       />
 
+      <ReadingProgress targetRef={articleRef} />
+
       <div ref={revealRef} className="shell pb-28 pt-36 sm:pt-40">
         <Reveal as="nav" className="mb-10" aria-label="Breadcrumb">
           <Link
@@ -84,7 +172,7 @@ export default function Article({ post, html, toc, related, minutes }) {
 
         {/* Masthead, cover and body all carry .article-rail, so the piece keeps
             one left edge and one measure from the title to the last link. */}
-        <article>
+        <article ref={articleRef}>
           <header className="article-rail">
             {post.category && (
               <Reveal as="p" className="eyebrow" style={{ color: "rgb(var(--accent))" }}>
@@ -121,6 +209,16 @@ export default function Article({ post, html, toc, related, minutes }) {
               )}
               <span aria-hidden="true">·</span>
               <span>{minutes} min read</span>
+              {/* Arrives after hydration; it sits last so nothing shifts. */}
+              {stats && stats.views > 0 && (
+                <>
+                  <span aria-hidden="true">·</span>
+                  <span>
+                    {stats.views.toLocaleString("en-US")}{" "}
+                    {stats.views === 1 ? "view" : "views"}
+                  </span>
+                </>
+              )}
               {updated && (
                 <>
                   <span aria-hidden="true">·</span>
@@ -153,14 +251,21 @@ export default function Article({ post, html, toc, related, minutes }) {
                 <details className="toc-inline mb-12 lg:hidden">
                   <summary>Contents</summary>
                   <nav aria-label="Table of contents" className="pb-5">
-                    <TocList toc={toc} />
+                    <TocList toc={toc} activeId={activeId} />
                   </nav>
                 </details>
               )}
 
               {/* Reveal is intentionally absent on the body: long-form text
                   should never wait on an observer to become readable. */}
-              <div className="prose" dangerouslySetInnerHTML={{ __html: html }} />
+              <div
+                className="prose"
+                onClick={onProseClick}
+                dangerouslySetInnerHTML={{ __html: html }}
+              />
+              <span role="status" aria-live="polite" className="sr-only">
+                {copyStatus}
+              </span>
 
               {post.tags?.length > 0 && (
                 <div
@@ -182,6 +287,41 @@ export default function Article({ post, html, toc, related, minutes }) {
                   </ul>
                 </div>
               )}
+
+              <div
+                className="mt-12 border-t pt-8"
+                style={{ borderColor: "rgb(var(--line) / 0.1)" }}
+              >
+                <h2 className="eyebrow">Enjoyed it? Like or share</h2>
+                <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-3">
+                  <button
+                    type="button"
+                    onClick={toggleLike}
+                    aria-pressed={liked}
+                    // The label replaces the button's text for screen readers,
+                    // so the count has to be spoken as part of it.
+                    aria-label={`${liked ? "Unlike" : "Like"} this article${
+                      stats ? `, ${stats.likes} ${stats.likes === 1 ? "like" : "likes"}` : ""
+                    }`}
+                    className="group inline-flex h-10 items-center gap-2 rounded-full border px-4 transition-colors duration-300 hover:border-accent"
+                    style={{
+                      borderColor: liked
+                        ? "rgb(var(--accent) / 0.6)"
+                        : "rgb(var(--line) / 0.14)",
+                    }}
+                  >
+                    {liked ? (
+                      <HiHeart className="h-4 w-4 text-accent" />
+                    ) : (
+                      <HiOutlineHeart className="h-4 w-4 text-muted transition-colors duration-300 group-hover:text-accent" />
+                    )}
+                    <span className="font-space text-xs text-muted">
+                      {stats ? stats.likes.toLocaleString("en-US") : "Like"}
+                    </span>
+                  </button>
+                  <ShareButtons url={url} title={post.title} />
+                </div>
+              </div>
 
               <div
                 className="mt-12 border-t pt-8"
@@ -209,12 +349,16 @@ export default function Article({ post, html, toc, related, minutes }) {
               <aside className="hidden lg:sticky lg:top-28 lg:block lg:self-start">
                 <h2 className="eyebrow">On this page</h2>
                 <nav aria-label="Table of contents" className="mt-4">
-                  <TocList toc={toc} />
+                  <TocList toc={toc} activeId={activeId} />
                 </nav>
               </aside>
             )}
           </div>
         </article>
+
+        {(previous || next) && <PostNav previous={previous} next={next} />}
+
+        <NewsletterSignup source={post.slug} />
 
         {related.length > 0 && (
           <section className="mt-24 border-t pt-12" style={{ borderColor: "rgb(var(--line) / 0.1)" }}>
@@ -229,6 +373,17 @@ export default function Article({ post, html, toc, related, minutes }) {
       </div>
     </>
   );
+}
+
+/**
+ * Next reuses this component when moving between two articles (related,
+ * previous/next links), so without a key the reveal observer, scroll hooks
+ * and like state would all carry over from the last post — and cards new to
+ * this one would never be revealed. Keying by slug gives each article a
+ * fresh mount.
+ */
+export default function ArticlePage(props) {
+  return <Article key={props.post.slug} {...props} />;
 }
 
 export async function getStaticPaths() {
@@ -292,6 +447,26 @@ export async function getStaticProps({ params }) {
     []
   );
 
+  // Neighbours by publish date, for the previous/next links. Only the two
+  // fields the links render are fetched.
+  const neighbour = (direction) =>
+    safeQuery(
+      () =>
+        prisma.post.findFirst({
+          where: {
+            published: true,
+            slug: { not: post.slug },
+            publishedAt: { [direction === "older" ? "lt" : "gt"]: post.publishedAt },
+          },
+          orderBy: { publishedAt: direction === "older" ? "desc" : "asc" },
+          select: { slug: true, title: true },
+        }),
+      null
+    );
+  const [{ data: previous }, { data: next }] = post.publishedAt
+    ? await Promise.all([neighbour("older"), neighbour("newer")])
+    : [{ data: null }, { data: null }];
+
   const related = relatedRows.map(({ content, ...item }) => ({
     ...item,
     excerpt: item.excerpt || deriveExcerpt(content),
@@ -305,6 +480,8 @@ export async function getStaticProps({ params }) {
       toc,
       minutes: readingTime(post.content),
       related: serialize(related),
+      previous,
+      next,
     },
     revalidate: revalidateFor(ok),
   };

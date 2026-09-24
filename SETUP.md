@@ -77,7 +77,7 @@ again. Editing a page will not pick up the new value.
 ## 4. Create the tables and import existing projects
 
 ```bash
-npm run db:push   # creates the Project, Post and ContactMessage tables
+npm run db:push   # creates the Project, Post, ContactMessage and Subscriber tables
 npm run seed      # imports the 27 projects that were hardcoded before
 ```
 
