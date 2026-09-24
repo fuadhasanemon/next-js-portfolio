@@ -119,3 +119,16 @@ model PostStats {
   views  Int    @default(0)
   likes  Int    @default(0)
 }
+
+// The managed list behind the post editor's category picker. Post.category
+// still stores the name as a plain string, so posts need no migration;
+// renaming a category rewrites that string on its posts.
+model Category {
+  id          String @id @default(cuid())
+  name        String @unique
+  slug        String @unique
+  description String @default("")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

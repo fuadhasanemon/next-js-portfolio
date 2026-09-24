@@ -7,8 +7,9 @@ import { Button, Field, Input, Panel, Select, Textarea, Toggle } from "@/compone
 import ImageInput from "@/components/admin/ImageInput";
 import MarkdownEditor from "@/components/admin/MarkdownEditor";
 import useUnsavedChanges from "@/hooks/useUnsavedChanges";
+import { listCategories } from "@/lib/categories";
 import { prisma, serialize } from "@/lib/prisma";
-import { CATEGORIES, readingTime, slugify } from "@/lib/site";
+import { readingTime, slugify } from "@/lib/site";
 
 const EMPTY = {
   title: "",
@@ -49,7 +50,7 @@ const fromPost = (post) => ({
   publishedAt: toLocalInput(post?.publishedAt),
 });
 
-export default function PostEditor({ post, isNew }) {
+export default function PostEditor({ post, isNew, categories }) {
   const router = useRouter();
   const [form, setForm] = useState(() => fromPost(post));
   // Snapshot of what is on the server; anything else means unsaved edits.
@@ -242,14 +243,21 @@ export default function PostEditor({ post, isNew }) {
           </Panel>
 
           <Panel title="Organise">
-            <Field label="Category">
+            <Field
+              label="Category"
+              hint={
+                <Link href="/admin/categories" className="hover:text-ink">
+                  Manage categories →
+                </Link>
+              }
+            >
               <Select value={form.category} onChange={onField("category")}>
                 <option value="">None</option>
-                {/* An older article may hold a category the preset list no
-                    longer carries — keep it selectable rather than blank. */}
-                {(form.category && !CATEGORIES.includes(form.category)
-                  ? [form.category, ...CATEGORIES]
-                  : CATEGORIES
+                {/* Belt and braces: listCategories() already adds any name a
+                    post uses, but a value must never render as blank. */}
+                {(form.category && !categories.includes(form.category)
+                  ? [form.category, ...categories]
+                  : categories
                 ).map((c) => (
                   <option key={c} value={c}>
                     {c}
@@ -288,10 +296,12 @@ export default function PostEditor({ post, isNew }) {
 }
 
 export async function getServerSideProps({ params }) {
-  if (params.id === "new") return { props: { post: null, isNew: true } };
+  const categories = (await listCategories()).map((c) => c.name);
+
+  if (params.id === "new") return { props: { post: null, isNew: true, categories } };
 
   const post = await prisma.post.findUnique({ where: { id: params.id } });
   if (!post) return { notFound: true };
 
-  return { props: { post: serialize(post), isNew: false } };
+  return { props: { post: serialize(post), isNew: false, categories } };
 }
