@@ -46,6 +46,15 @@ export default function AdminDashboard({ stats }) {
         </div>
       </section>
 
+      <section className="mb-10">
+        <h2 className="eyebrow mb-4">Newsletter</h2>
+        <div className="grid gap-4 sm:grid-cols-3">
+          <Stat label="Active subscribers" value={stats.subscribersActive} href="/admin/subscribers" />
+          <Stat label="Joined in the last 30 days" value={stats.subscribersRecent} href="/admin/subscribers" />
+          <Stat label="Unsubscribed" value={stats.subscribersGone} />
+        </div>
+      </section>
+
       <div className="flex flex-wrap gap-3">
         <Link href="/admin/projects/new" className="btn-primary">
           New project
@@ -67,6 +76,9 @@ export async function getServerSideProps() {
     messages,
     messagesNew,
     messagesArchived,
+    subscribersActive,
+    subscribersRecent,
+    subscribersGone,
   ] = await Promise.all([
     prisma.project.count(),
     prisma.project.count({ where: { published: true } }),
@@ -75,6 +87,14 @@ export async function getServerSideProps() {
     prisma.contactMessage.count(),
     prisma.contactMessage.count({ where: { status: "NEW" } }),
     prisma.contactMessage.count({ where: { status: "ARCHIVED" } }),
+    prisma.subscriber.count({ where: { status: "ACTIVE" } }),
+    prisma.subscriber.count({
+      where: {
+        status: "ACTIVE",
+        createdAt: { gte: new Date(Date.now() - 30 * 24 * 3600 * 1000) },
+      },
+    }),
+    prisma.subscriber.count({ where: { status: "UNSUBSCRIBED" } }),
   ]);
 
   return {
@@ -89,6 +109,9 @@ export async function getServerSideProps() {
         messages,
         messagesNew,
         messagesArchived,
+        subscribersActive,
+        subscribersRecent,
+        subscribersGone,
       },
     },
   };
