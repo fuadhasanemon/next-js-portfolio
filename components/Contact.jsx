@@ -45,7 +45,7 @@ const Contact = () => (
       }}
     />
 
-    <div className="grid gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,20rem)] lg:items-start">
+    <div className="grid gap-12 lg:grid-cols-2 lg:items-start">
       <div>
         <p className="eyebrow">Contact</p>
         <h2 className="mt-4 text-fluid-h2 font-semibold text-ink">
@@ -57,9 +57,34 @@ const Contact = () => (
           read everything and reply within a day or two.
         </p>
 
-        <div className="mt-8">
-          <ContactForm />
-        </div>
+        <ul className="mt-8 flex flex-col divide-y" style={{ borderColor: "rgb(var(--line) / 0.1)" }}>
+          {CHANNELS.map(({ label, value, href, Icon }) => (
+            <li key={label} style={{ borderColor: "rgb(var(--line) / 0.1)" }}>
+              <a
+                href={href}
+                target={href.startsWith("mailto:") ? undefined : "_blank"}
+                rel="noreferrer"
+                className="group flex items-center gap-4 py-4 transition-colors duration-300"
+              >
+                <span
+                  className="grid h-10 w-10 shrink-0 place-items-center rounded-full border transition-colors duration-300 group-hover:border-accent"
+                  style={{ borderColor: "rgb(var(--line) / 0.14)" }}
+                >
+                  <Icon className="h-4 w-4 text-muted transition-colors duration-300 group-hover:text-accent" />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-xs text-faint">{label}</span>
+                  <span className="block truncate text-sm text-ink">{value}</span>
+                </span>
+                <BsArrowUpRight className="h-3.5 w-3.5 shrink-0 text-faint transition-all duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-accent" />
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <div>
+        <ContactForm />
 
         <p className="mt-5 text-xs text-faint">
           Prefer email? Write to{" "}
@@ -72,31 +97,6 @@ const Contact = () => (
           .
         </p>
       </div>
-
-      <ul className="flex flex-col divide-y" style={{ borderColor: "rgb(var(--line) / 0.1)" }}>
-        {CHANNELS.map(({ label, value, href, Icon }) => (
-          <li key={label} style={{ borderColor: "rgb(var(--line) / 0.1)" }}>
-            <a
-              href={href}
-              target={href.startsWith("mailto:") ? undefined : "_blank"}
-              rel="noreferrer"
-              className="group flex items-center gap-4 py-4 transition-colors duration-300"
-            >
-              <span
-                className="grid h-10 w-10 shrink-0 place-items-center rounded-full border transition-colors duration-300 group-hover:border-accent"
-                style={{ borderColor: "rgb(var(--line) / 0.14)" }}
-              >
-                <Icon className="h-4 w-4 text-muted transition-colors duration-300 group-hover:text-accent" />
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block text-xs text-faint">{label}</span>
-                <span className="block truncate text-sm text-ink">{value}</span>
-              </span>
-              <BsArrowUpRight className="h-3.5 w-3.5 shrink-0 text-faint transition-all duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-accent" />
-            </a>
-          </li>
-        ))}
-      </ul>
     </div>
   </Reveal>
 );
