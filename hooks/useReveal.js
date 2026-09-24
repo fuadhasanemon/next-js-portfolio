@@ -21,25 +21,49 @@ export function useRevealGroup({ threshold = 0.15, rootMargin = "0px 0px -8% 0px
       ...root.querySelectorAll(".reveal"),
     ];
 
-    if (prefersReducedMotion() || typeof IntersectionObserver === "undefined") {
-      targets.forEach((el) => el.classList.add("is-visible"));
-      return;
-    }
+    const instant =
+      prefersReducedMotion() || typeof IntersectionObserver === "undefined";
 
-    const io = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add("is-visible");
-            io.unobserve(entry.target);
-          }
-        });
-      },
-      { threshold, rootMargin }
-    );
+    const io = instant
+      ? null
+      : new IntersectionObserver(
+          (entries) => {
+            entries.forEach((entry) => {
+              if (entry.isIntersecting) {
+                entry.target.classList.add("is-visible");
+                io.unobserve(entry.target);
+              }
+            });
+          },
+          { threshold, rootMargin }
+        );
 
-    targets.forEach((el) => io.observe(el));
-    return () => io.disconnect();
+    const watch = (el) => {
+      if (el.classList.contains("is-visible")) return;
+      if (instant) el.classList.add("is-visible");
+      else io.observe(el);
+    };
+
+    targets.forEach(watch);
+
+    // Content rendered after mount (load more, filtering) would otherwise sit
+    // at its hidden starting state forever, so pick up .reveal nodes as they
+    // are added.
+    const mo = new MutationObserver((mutations) => {
+      mutations.forEach((m) =>
+        m.addedNodes.forEach((node) => {
+          if (node.nodeType !== 1) return;
+          if (node.classList.contains("reveal")) watch(node);
+          node.querySelectorAll(".reveal").forEach(watch);
+        })
+      );
+    });
+    mo.observe(root, { childList: true, subtree: true });
+
+    return () => {
+      mo.disconnect();
+      io?.disconnect();
+    };
   }, [threshold, rootMargin]);
 
   return ref;
