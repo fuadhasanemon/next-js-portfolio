@@ -4,14 +4,17 @@ import { useRef, useState } from "react";
 import Spinner from "@/components/Spinner";
 import Skeleton from "@/components/admin/Skeleton";
 import { Field, Input } from "@/components/admin/Fields";
+import MediaPicker from "@/components/admin/MediaPicker";
+import { uploadImage } from "@/lib/upload";
 
 /**
- * Uploads straight to Cloudinary using a signature minted by
- * /api/admin/upload, so no image bytes pass through our own API routes.
+ * An image URL field with two ways to fill it: upload a new file straight to
+ * Cloudinary (see lib/upload.js), or pick one already in the media library.
  */
 const ImageInput = ({ label, folder = "work", value, alt, onChange, onAltChange }) => {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [picking, setPicking] = useState(false);
   const inputRef = useRef(null);
 
   const upload = async (file) => {
@@ -20,25 +23,7 @@ const ImageInput = ({ label, folder = "work", value, alt, onChange, onAltChange 
     setError("");
 
     try {
-      const sigRes = await fetch("/api/admin/upload", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ folder }),
-      });
-      if (!sigRes.ok) throw new Error((await sigRes.json()).error || "Signing failed");
-
-      const sig = await sigRes.json();
-      const form = new FormData();
-      form.append("file", file);
-      form.append("api_key", sig.apiKey);
-      form.append("timestamp", sig.timestamp);
-      form.append("signature", sig.signature);
-      form.append("folder", sig.folder);
-
-      const upRes = await fetch(sig.uploadUrl, { method: "POST", body: form });
-      const json = await upRes.json();
-      if (!upRes.ok) throw new Error(json?.error?.message || "Upload failed");
-
+      const json = await uploadImage(file, folder);
       onChange(json.secure_url);
     } catch (err) {
       setError(err.message);
@@ -68,6 +53,15 @@ const ImageInput = ({ label, folder = "work", value, alt, onChange, onAltChange 
             {busy && <Spinner className="h-3 w-3" />}
             {busy ? "Uploading…" : "Upload"}
           </button>
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => setPicking(true)}
+            className="inline-flex shrink-0 items-center gap-2 rounded-lg border px-3 text-sm text-muted transition-colors hover:text-ink disabled:opacity-50"
+            style={{ borderColor: "rgb(var(--line) / 0.16)" }}
+          >
+            Library
+          </button>
         </div>
       </Field>
 
@@ -80,6 +74,18 @@ const ImageInput = ({ label, folder = "work", value, alt, onChange, onAltChange 
       />
 
       {error && <p className="text-xs text-red-500">{error}</p>}
+
+      {picking && (
+        <MediaPicker
+          folder={folder}
+          current={value}
+          onSelect={(url) => {
+            setError("");
+            onChange(url);
+          }}
+          onClose={() => setPicking(false)}
+        />
+      )}
 
       {onAltChange && (
         <Field label="Alt text" hint="Describes the image for screen readers and search engines.">
